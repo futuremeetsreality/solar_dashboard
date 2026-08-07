@@ -371,6 +371,7 @@ cards:
             de: {
               today: 'Heute',
               todayUpper: 'HEUTE',
+              current: 'Aktuell',
               max: 'Max.',
               maxUpper: 'MAX',
               pv: 'PV',
@@ -393,6 +394,7 @@ cards:
             en: {
               today: 'Today',
               todayUpper: 'TODAY',
+              current: 'Current',
               max: 'Max.',
               maxUpper: 'MAX',
               pv: 'PV',
@@ -1039,7 +1041,7 @@ cards:
                         ${t.today} ${formatEnergy(houseToday)} kWh
                       </span>
                       <span>
-                        Aktuell ${formatPower(housePower)} kW
+                        ${t.current} ${formatPower(housePower)} kW
                       </span>
                     </div>
 
@@ -1175,7 +1177,7 @@ cards:
                 <div class="v5-bar-header centered-header">
 
                   <div class="v5-bar-title">
-                    BATTERIE
+                    ${t.battery}
                   </div>
 
                   <div class="v5-bar-main">
