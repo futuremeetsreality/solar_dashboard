@@ -2,9 +2,9 @@
 
 [English](README.md) | [Deutsch](README_DE.md)
 
-Ein responsives PV- und Batterie-Dashboard für Home Assistant mit Power-Flux-Ansicht, dynamischen MPPT-Gauges, Tageswerten, Netzfluss, Batterie, Einspeisevergütung, adaptivem Hell-/Dunkelmodus und zweisprachiger Oberfläche.
+Ein responsives PV- und Batterie-Dashboard für Home Assistant mit Power-Flux-Ansicht, dynamischen MPPT-Gauges, Tageswerten, Netzfluss, Batterie, Einspeisevergütung, adaptivem Hell-/Dunkelmodus, zweisprachiger Oberfläche und eigenem Wall-Display-Profil.
 
-Aktuelle Version: **v0.8.0-alpha**
+Aktuelle Version: **v0.8.1-alpha**
 
 > Alpha bedeutet: Das Dashboard ist bereits nutzbar, wird aber noch auf unterschiedlichen Home-Assistant-Systemen hinsichtlich Konfiguration, Kompatibilität und Darstellung getestet.
 
@@ -19,6 +19,8 @@ Aktuelle Version: **v0.8.0-alpha**
 - Dashboard-Sprachen `auto`, `de` und `en`
 - sprachabhängige Zahlenformatierung
 - herstellerunabhängige Sensor-Zuordnung
+- eigener `wall`-Modus für dauerhaft montierte Tablets
+- automatischer Kompatibilitätsmodus für ältere Safari-/iPadOS-Geräte
 
 ## Voraussetzungen
 
@@ -59,6 +61,38 @@ Unterstützte Werte:
 - `en` — Englisch erzwingen
 
 Auch die Zahlenformatierung passt sich an die gewählte Sprache an.
+
+## Display- und Performance-Profile
+
+v0.8.1-alpha ergänzt zwei voneinander unabhängige Einstellungen:
+
+```js
+displayMode: 'auto',
+performanceMode: 'auto',
+```
+
+`displayMode` unterstützt:
+
+- `auto` — normales responsives Verhalten; Touch-Tablets werden automatisch erkannt
+- `desktop` — Desktop-Profil
+- `tablet` — Tablet-Profil
+- `wall` — größere Werte, dickere Balken und optimierte Abstände für fest montierte Anzeigen
+
+`performanceMode` unterstützt:
+
+- `auto` — prüft die Browser-Fähigkeiten automatisch
+- `high` — vollständige optische Effekte
+- `balanced` — reduzierte GPU-intensive Effekte
+- `low` — Kompatibilitätsprofil mit vereinfachter Darstellung, ohne aufwendige SVG-Filter und ohne Animationen
+
+Ältere Safari-/iPadOS-Versionen ohne Unterstützung für `color-mix()` fallen automatisch auf `low` zurück. Das ist insbesondere für ältere Wandtablets wie ein iPad Air 2 mit iPadOS 15 gedacht.
+
+Für ein älteres, dauerhaft montiertes iPad empfiehlt sich zunächst:
+
+```js
+displayMode: 'wall',
+performanceMode: 'auto',
+```
 
 ## MPPT-/Tracker-Konfiguration
 
@@ -106,7 +140,7 @@ Siehe:
 
 ## Versionierung
 
-Das Projekt verwendet ab jetzt semantische Pre-Release-Versionierung:
+Das Projekt verwendet semantische Pre-Release-Versionierung:
 
 - `v0.8.x-alpha` — aktive Funktionsentwicklung und Kompatibilitätstests
 - `v0.9.x-beta` — weitgehend vollständiger Funktionsumfang, breite Tests
