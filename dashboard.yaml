@@ -1,5 +1,5 @@
-# solar_dashboard V6 - dashboard.yaml
-# Aktualisiert: 2026-08-07 20:22
+# solar_dashboard V7 - dashboard.yaml
+# Aktualisiert: 2026-08-07 20:25
 # Voraussetzungen: custom:button-card, custom:power-flux-card, card-mod
 
 type: vertical-stack
@@ -168,34 +168,99 @@ cards:
            */
 
           const CONFIG = {
-            entities: {
+
+            /*
+             * ======================================================
+             * MPPT / TRACKER
+             * ======================================================
+             *
+             * Beliebig viele Tracker möglich.
+             *
+             * 1 Tracker:
+             *   Nur einen Block in dieser Liste stehen lassen.
+             *
+             * 3 Tracker:
+             *   Einen dritten Block hinzufügen.
+             *
+             * Das Dashboard erzeugt die MPPT-Karten, Farben,
+             * Maximalwerte und den geteilten PV-Balken automatisch.
+             *
+             * Pflicht pro Tracker:
+             * - name        = Anzeigename
+             * - power       = aktuelle Leistung, W oder kW
+             * - energyToday = Tagesertrag, Wh oder kWh
+             * - maxKw       = maximale Generatorleistung dieses Trackers in kW
+             *
+             * Farben sind frei wählbar.
+             */
+
+            trackers: [
+              {
+                // Tracker 1 / String 1
+                name: 'MPPT 1',
+
+                // [PFLICHT] Aktuelle Leistung dieses PV-Trackers.
+                // Messwert: momentane elektrische Leistung.
+                // Einheit: W oder kW.
+                power:
+                  'sensor.solax_inverter_pv_power_1',
+
+                // [PFLICHT] Heute erzeugte Energie dieses Trackers.
+                // Messwert: seit Mitternacht aufsummierter PV-Ertrag.
+                // Einheit: Wh oder kWh.
+                energyToday:
+                  'sensor.technikraum_solax_inverter_mppt_1_tageszahler',
+
+                // Maximale/zugeordnete Generatorleistung dieses Trackers.
+                // Einheit: kW.
+                maxKw: 9.10,
+
+                // Farbe des Halbkreis-Gauges und PV-Segments.
+                colorStart: '#ff9800',
+                colorEnd: '#ffd740'
+              },
+
+              {
+                // Tracker 2 / String 2
+                name: 'MPPT 2',
+
+                // [PFLICHT] Aktuelle Leistung dieses PV-Trackers.
+                // Einheit: W oder kW.
+                power:
+                  'sensor.solax_inverter_pv_power_2',
+
+                // [PFLICHT] Heute erzeugte Energie dieses Trackers.
+                // Einheit: Wh oder kWh.
+                energyToday:
+                  'sensor.technikraum_solax_inverter_mppt_2_tageszahler',
+
+                // Maximale/zugeordnete Generatorleistung dieses Trackers.
+                // Einheit: kW.
+                maxKw: 6.37,
+
+                colorStart: '#43a047',
+                colorEnd: '#76ff7a'
+              }
+
               /*
-               * PV / MPPT
+               * Beispiel MPPT 3:
+               *
+               * ,{
+               *   name: 'MPPT 3',
+               *   power: 'sensor.mein_mppt_3_power',
+               *   energyToday: 'sensor.mein_mppt_3_energy_today',
+               *   maxKw: 5.00,
+               *   colorStart: '#2196f3',
+               *   colorEnd: '#00e5ff'
+               * }
                */
+            ],
 
-              // [PFLICHT] Aktuelle Leistung von MPPT 1.
-              // Messwert: momentane elektrische Leistung dieses PV-Eingangs.
-              // Einheit: W oder kW.
-              mppt1Power:
-                'sensor.solax_inverter_pv_power_1',
+            entities: {
 
-              // [PFLICHT] Aktuelle Leistung von MPPT 2.
-              // Messwert: momentane elektrische Leistung dieses PV-Eingangs.
-              // Einheit: W oder kW.
-              mppt2Power:
-                'sensor.solax_inverter_pv_power_2',
-
-              // [PFLICHT] Heute erzeugte Energie von MPPT 1.
-              // Messwert: seit Mitternacht aufsummierter PV-Ertrag dieses Eingangs.
-              // Einheit: Wh oder kWh.
-              mppt1EnergyToday:
-                'sensor.technikraum_solax_inverter_mppt_1_tageszahler',
-
-              // [PFLICHT] Heute erzeugte Energie von MPPT 2.
-              // Messwert: seit Mitternacht aufsummierter PV-Ertrag dieses Eingangs.
-              // Einheit: Wh oder kWh.
-              mppt2EnergyToday:
-                'sensor.technikraum_solax_inverter_mppt_2_tageszahler',
+              /*
+               * PV GESAMT
+               */
 
               // [PFLICHT] Aktuelle gesamte PV-Leistung.
               // Messwert: Summe aller aktuell erzeugenden PV-Eingänge.
@@ -272,19 +337,16 @@ cards:
                 'sensor.solax_inverter_battery_1_power_charge',
 
               // [PFLICHT] Aktuell noch gespeicherte/verfügbare Batterieenergie.
-              // Messwert: verbleibende Energie im Speicher.
               // Einheit: Wh oder kWh.
               batteryEnergyRemaining:
                 'sensor.solax_inverter_remaining_battery_energy',
 
               // [PFLICHT] Heute in die Batterie geladene Energie.
-              // Messwert: aufsummierte Ladeenergie seit Mitternacht.
               // Einheit: Wh oder kWh.
               batteryChargeEnergyToday:
                 'sensor.solax_inverter_battery_input_energy_today',
 
               // [PFLICHT] Heute aus der Batterie entladene Energie.
-              // Messwert: aufsummierte Entladeenergie seit Mitternacht.
               // Einheit: Wh oder kWh.
               batteryDischargeEnergyToday:
                 'sensor.solax_inverter_battery_output_energy_today',
@@ -294,28 +356,17 @@ cards:
                */
 
               // [OPTIONAL] Heutige Einspeisevergütung / Erlös.
-              // Messwert: monetärer Tageswert.
               // Einheit: EUR.
               compensationToday:
                 'sensor.ugendorf_electricity_costs_tages_einspeisung',
 
               // [OPTIONAL] Geschätzte Restlaufzeit der Batterie.
-              // Messwert: Zahl oder bereits formatierter Text.
               batteryRuntime:
                 'sensor.ugendorf_battery_restlaufzeit'
             },
 
             limits: {
-              // Installierte maximale PV-Gesamtleistung in kW.
-              pvMaxKw: 15.47,
-
-              // Maximale/zugeordnete Generatorleistung an MPPT 1 in kW.
-              mppt1MaxKw: 9.10,
-
-              // Maximale/zugeordnete Generatorleistung an MPPT 2 in kW.
-              mppt2MaxKw: 6.37,
-
-              // Nutzbare bzw. für die Anzeige gewünschte Batteriekapazität in kWh.
+              // Batteriekapazität in kWh.
               batteryCapacityKwh: 12.50
             }
           };
@@ -497,14 +548,6 @@ cards:
            * ========================================================
            */
 
-          const mppt1Power = getPower(
-            CONFIG.entities.mppt1Power
-          );
-
-          const mppt2Power = getPower(
-            CONFIG.entities.mppt2Power
-          );
-
           const pvPower = getPower(
             CONFIG.entities.pvPowerTotal
           );
@@ -530,14 +573,6 @@ cards:
            * TAGESENERGIEN
            * ========================================================
            */
-
-          const mppt1Today = getEnergy(
-            CONFIG.entities.mppt1EnergyToday
-          );
-
-          const mppt2Today = getEnergy(
-            CONFIG.entities.mppt2EnergyToday
-          );
 
           const solarToday = getEnergy(
             CONFIG.entities.pvEnergyToday
@@ -663,71 +698,191 @@ cards:
 
           /*
            * ========================================================
-           * MPPT-GRAFIKEN
+           * MPPT / TRACKER – DYNAMISCH
            * ========================================================
            */
 
-          const mppt1Gauge = createGauge(
-            mppt1Power,
-            CONFIG.limits.mppt1MaxKw,
-            'mppt1-gradient',
-            'mppt1-glow',
-            {
-              start: '#ff9800',
-              end: '#ffd740'
-            }
+          const trackers = CONFIG.trackers
+            .filter((tracker) =>
+              tracker &&
+              tracker.power &&
+              Number(tracker.maxKw) > 0
+            )
+            .map((tracker, index) => {
+
+              const power = getPower(tracker.power);
+              const energyToday =
+                tracker.energyToday
+                  ? getEnergy(tracker.energyToday)
+                  : 0;
+
+              const colorStart =
+                tracker.colorStart || '#ff9800';
+
+              const colorEnd =
+                tracker.colorEnd || colorStart;
+
+              const name =
+                tracker.name || `MPPT ${index + 1}`;
+
+              const maxKw =
+                Number(tracker.maxKw) || 1;
+
+              const gauge = createGauge(
+                power,
+                maxKw,
+                `mppt-gradient-${index}`,
+                `mppt-glow-${index}`,
+                {
+                  start: colorStart,
+                  end: colorEnd
+                }
+              );
+
+              return {
+                ...tracker,
+                index,
+                name,
+                maxKw,
+                power,
+                energyToday,
+                colorStart,
+                colorEnd,
+                gauge
+              };
+            });
+
+          const pvMaximum = trackers.reduce(
+            (sum, tracker) => sum + tracker.maxKw,
+            0
           );
 
-          const mppt2Gauge = createGauge(
-            mppt2Power,
-            CONFIG.limits.mppt2MaxKw,
-            'mppt2-gradient',
-            'mppt2-glow',
-            {
-              start: '#43a047',
-              end: '#76ff7a'
-            }
-          );
-
-
-          /*
-           * ========================================================
-           * V5 – QUERBALKEN PV TOTAL / BATTERIE
-           * ========================================================
-           */
-
-          const pvMaximum = CONFIG.limits.pvMaxKw;
           const pvPercentRaw =
-            pvMaximum > 0 ? (pvPower / pvMaximum) * 100 : 0;
+            pvMaximum > 0
+              ? (pvPower / pvMaximum) * 100
+              : 0;
 
           const pvPercentBar =
             Math.min(Math.max(pvPercentRaw, 0), 100);
 
-          const mpptTotalPower =
-            Math.max(mppt1Power + mppt2Power, 0);
+          const mpptTotalPower = trackers.reduce(
+            (sum, tracker) =>
+              sum + Math.max(tracker.power, 0),
+            0
+          );
 
           const pvScale =
-            mpptTotalPower > pvMaximum && mpptTotalPower > 0
+            mpptTotalPower > pvMaximum &&
+            mpptTotalPower > 0
               ? pvMaximum / mpptTotalPower
               : 1;
 
-          const mppt1BarWidth =
-            Math.min(
-              Math.max(
-                ((mppt1Power * pvScale) / pvMaximum) * 100,
-                0
-              ),
-              100
-            );
+          const trackerBarData = trackers.map(
+            (tracker) => ({
+              ...tracker,
+              barWidth:
+                pvMaximum > 0
+                  ? Math.min(
+                      Math.max(
+                        (
+                          (
+                            tracker.power *
+                            pvScale
+                          ) /
+                          pvMaximum
+                        ) * 100,
+                        0
+                      ),
+                      100
+                    )
+                  : 0
+            })
+          );
 
-          const mppt2BarWidth =
-            Math.min(
-              Math.max(
-                ((mppt2Power * pvScale) / pvMaximum) * 100,
-                0
-              ),
-              100
-            );
+          const mpptCardsHtml = trackers
+            .map((tracker) => `
+              <div
+                class="panel mppt-panel"
+                style="
+                  --tracker-start:${tracker.colorStart};
+                  --tracker-end:${tracker.colorEnd};
+                "
+              >
+
+                <div class="mppt-title">
+                  ${tracker.name}
+                </div>
+
+                <div class="mppt-gauge">
+
+                  ${tracker.gauge}
+
+                  <div class="mppt-current-value">
+                    ${formatPower(tracker.power)}
+                    <span>kW</span>
+                  </div>
+
+                </div>
+
+                <div class="mppt-daily-box">
+
+                  <ha-icon
+                    icon="mdi:lightning-bolt"
+                  ></ha-icon>
+
+                  <div>
+
+                    <div class="mppt-daily-value">
+                      ${formatEnergy(tracker.energyToday)}
+                      kWh
+                    </div>
+
+                    <div class="small-label">
+                      HEUTE · MAX ${formatNumber(
+                        tracker.maxKw,
+                        2,
+                        2
+                      )} kW
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
+            `)
+            .join('');
+
+          const pvSegmentsHtml = trackerBarData
+            .map((tracker) => `
+              <div
+                class="pv-segment"
+                title="${tracker.name}"
+                style="
+                  width:${tracker.barWidth}%;
+                  background:
+                    linear-gradient(
+                      90deg,
+                      ${tracker.colorStart},
+                      ${tracker.colorEnd}
+                    );
+                  box-shadow:
+                    0 0 9px ${tracker.colorStart}88;
+                "
+              ></div>
+            `)
+            .join('');
+
+          const trackerFooterHtml = trackers
+            .map((tracker) => `
+              <span
+                style="color:${tracker.colorEnd};"
+              >
+                ${tracker.name.replace('MPPT ', '')}
+                ${formatPower(tracker.power)}
+              </span>
+            `)
+            .join('');
 
           const batteryMaximum = CONFIG.limits.batteryCapacityKwh;
 
@@ -752,89 +907,14 @@ cards:
             <div class="solar-dashboard">
 
               <!-- =============================================== -->
-              <!-- MPPT 1 -->
+              <!-- MPPT / TRACKER – DYNAMISCH -->
               <!-- =============================================== -->
 
-              <div class="panel mppt-panel mppt1-panel">
-
-                <div class="mppt-title">
-                  MPPT 1
-                </div>
-
-                <div class="mppt-gauge">
-
-                  ${mppt1Gauge}
-
-                  <div class="mppt-current-value">
-                    ${formatPower(mppt1Power)}
-                    <span>kW</span>
-                  </div>
-
-                </div>
-
-                <div class="mppt-daily-box">
-
-                  <ha-icon
-                    icon="mdi:lightning-bolt"
-                  ></ha-icon>
-
-                  <div>
-
-                    <div class="mppt-daily-value">
-                      ${formatEnergy(mppt1Today)} kWh
-                    </div>
-
-                    <div class="small-label">
-                      HEUTE
-                    </div>
-
-                  </div>
-
-                </div>
-
-              </div>
-
-              <!-- =============================================== -->
-              <!-- MPPT 2 -->
-              <!-- =============================================== -->
-
-              <div class="panel mppt-panel mppt2-panel">
-
-                <div class="mppt-title">
-                  MPPT 2
-                </div>
-
-                <div class="mppt-gauge">
-
-                  ${mppt2Gauge}
-
-                  <div class="mppt-current-value">
-                    ${formatPower(mppt2Power)}
-                    <span>kW</span>
-                  </div>
-
-                </div>
-
-                <div class="mppt-daily-box">
-
-                  <ha-icon
-                    icon="mdi:lightning-bolt"
-                  ></ha-icon>
-
-                  <div>
-
-                    <div class="mppt-daily-value">
-                      ${formatEnergy(mppt2Today)} kWh
-                    </div>
-
-                    <div class="small-label">
-                      HEUTE
-                    </div>
-
-                  </div>
-
-                </div>
-
+              <div
+                class="mppt-grid"
+                style="--mppt-count:${Math.max(trackers.length, 1)};"
+              >
+                ${mpptCardsHtml}
               </div>
 
               <!-- =============================================== -->
@@ -867,7 +947,7 @@ cards:
                         Heute ${formatEnergy(solarToday)} kWh
                       </span>
                       <span>
-                        Max. ${formatNumber(CONFIG.limits.pvMaxKw, 2, 2)} kW
+                        Max. ${formatNumber(pvMaximum, 2, 2)} kW
                       </span>
                     </div>
 
@@ -999,26 +1079,16 @@ cards:
                 </div>
 
                 <div class="pv-split-track">
-
-                  <div
-                    class="pv-segment mppt1-segment"
-                    style="width:${mppt1BarWidth}%;"
-                  ></div>
-
-                  <div
-                    class="pv-segment mppt2-segment"
-                    style="width:${mppt2BarWidth}%;"
-                  ></div>
-
+                  ${pvSegmentsHtml}
                 </div>
 
-                <div class="v5-bar-footer">
+                <div class="v7-pv-footer">
 
-                  <span class="mppt1-footer">
-                    1&nbsp; ${formatPower(mppt1Power)}
-                  </span>
+                  <div class="tracker-footer-values">
+                    ${trackerFooterHtml}
+                  </div>
 
-                  <span class="v5-footer-center pv-percent">
+                  <div class="pv-percent">
                     ${formatNumber(
                       pvPercentRaw,
                       0,
@@ -1026,11 +1096,7 @@ cards:
                     )} %
                     ·
                     ${formatEnergy(solarToday)} kWh heute
-                  </span>
-
-                  <span class="mppt2-footer">
-                    2&nbsp; ${formatPower(mppt2Power)}
-                  </span>
+                  </div>
 
                 </div>
 
@@ -3035,3 +3101,135 @@ cards:
           font-size: 8px;
         }
       }
+
+
+      /*
+       * ==========================================================
+       * V7 – DYNAMISCHE MPPT-TRACKER
+       * ==========================================================
+       */
+
+      .solar-dashboard {
+        grid-template-columns:
+          repeat(2, minmax(0, 1fr)) !important;
+
+        grid-template-areas:
+          "mppt mppt"
+          "pv battery"
+          "live live"
+          "payment runtime" !important;
+      }
+
+      .mppt-grid {
+        grid-area: mppt;
+        display: grid;
+        grid-template-columns:
+          repeat(
+            auto-fit,
+            minmax(min(145px, 100%), 1fr)
+          );
+        gap: 7px;
+        min-width: 0;
+      }
+
+      .mppt-grid .mppt-panel {
+        min-width: 0;
+      }
+
+      .mppt-grid .mppt-daily-box ha-icon {
+        color: var(--tracker-end);
+        filter:
+          drop-shadow(
+            0 0 6px var(--tracker-start)
+          );
+      }
+
+      .v7-pv-footer {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 5px;
+        width: 100%;
+        min-width: 0;
+        color: rgba(255,255,255,0.58);
+        font-size: 5.8px;
+        font-weight: 600;
+        line-height: 1;
+        white-space: nowrap;
+      }
+
+      .tracker-footer-values {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        min-width: 0;
+        overflow: hidden;
+      }
+
+      .tracker-footer-values span {
+        flex: 0 1 auto;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .v7-pv-footer .pv-percent {
+        justify-self: end;
+        text-align: right;
+      }
+
+      @media screen and (max-width: 699px) {
+
+        .mppt-grid {
+          grid-template-columns:
+            repeat(
+              auto-fit,
+              minmax(min(145px, 100%), 1fr)
+            );
+          gap: 6px;
+        }
+
+        .mppt-grid .mppt-panel {
+          height: 174px;
+        }
+
+        .v7-pv-footer {
+          font-size: 5.2px;
+          gap: 3px;
+        }
+
+        .tracker-footer-values {
+          gap: 2px;
+        }
+      }
+
+      @media screen and (min-width: 700px) {
+
+        .solar-dashboard {
+          grid-template-columns:
+            repeat(2, minmax(0, 1fr)) !important;
+
+          grid-template-areas:
+            "mppt mppt"
+            "pv battery"
+            "live live"
+            "payment runtime" !important;
+        }
+
+        .mppt-grid {
+          grid-template-columns:
+            repeat(
+              var(--mppt-count),
+              minmax(0, 1fr)
+            );
+          gap: 10px;
+        }
+
+        .mppt-grid .mppt-panel {
+          height: 180px;
+        }
+
+        .v7-pv-footer {
+          font-size: 7px;
+        }
+      }
+
