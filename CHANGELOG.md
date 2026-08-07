@@ -1,5 +1,19 @@
 # Changelog
 
+## V7.2 - 2026-08-07
+
+- Adaptives Glow- und Verlaufsdesign für Hell- und Dunkelmodus.
+- Oberflächen basieren auf den aktiven Home-Assistant-Themefarben.
+- MPPT-Karten erhalten Tracker-spezifische Glows aus `colorStart` und `colorEnd`.
+- PV Total erhält einen adaptiven Orange-/Grün-Verlauf mit verbessertem Kontrast.
+- Batterie erhält einen adaptiven Grün-/Warmton-Glow.
+- Live-Leiste erhält dezente Farbzonen für PV, Haus, Netz und Batterie.
+- Vergütung erhält einen blauen Glow.
+- Restlaufzeit erhält einen violetten Glow.
+- Kleine Tracker- und Prozenttexte werden theme-adaptiv mit der aktuellen Textfarbe gemischt.
+- Rahmen, Track-Hintergründe, Inset-Flächen und neutrale Texte reagieren automatisch auf das HA-Theme.
+- Power Flux Card behält ihr eigenes automatisches Theme-Verhalten.
+
 ## V7.1 - 2026-08-07
 
 - Vollständige Unterstützung für Home-Assistant-Hell- und Dunkelmodus ergänzt.
