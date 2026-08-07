@@ -1,116 +1,113 @@
 # Solar Dashboard for Home Assistant
 
-Ein responsives PV-/Batterie-Dashboard für Home Assistant mit Power-Flux-Ansicht, dynamischen MPPT-Gauges, Tageswerten, Netzfluss, Batterie und Einspeisevergütung.
+[English](README.md) | [Deutsch](README_DE.md)
 
-Aktueller Stand: **V7.2**
+A responsive solar and battery dashboard for Home Assistant with Power Flux visualization, dynamic MPPT gauges, daily energy values, grid flow, battery status, feed-in revenue, adaptive light/dark styling, and bilingual UI support.
 
-## Was ist neu in V7.2?
+Current version: **v0.8.0-alpha**
 
-V7.2 erweitert die automatische Hell-/Dunkelmodus-Unterstützung um ein adaptives Glow- und Verlaufsdesign.
+> Alpha means the dashboard is already usable, but configuration, compatibility and UI behavior are still being tested across different Home Assistant installations.
 
-Die Karten verwenden die aktiven Home-Assistant-Themefarben als Basis und mischen die Solar-Akzentfarben automatisch dazu. Dadurch bleibt das Dashboard sowohl im hellen als auch im dunklen Modus kontrastreich, ohne auf die farbigen Verläufe zu verzichten.
+## Highlights
 
-Angepasst wurden insbesondere:
+- Automatic Home Assistant light/dark mode support
+- Adaptive glows and gradients in both modes
+- Dynamic support for 1, 2, 3 or more MPPT/PV trackers
+- Automatic PV maximum based on all tracker `maxKw` values
+- Dynamic split PV Total bar for all configured trackers
+- Battery, house and grid live values plus daily values
+- `auto`, `de` and `en` dashboard languages
+- Locale-aware number formatting
+- Manufacturer-independent sensor mapping
 
-- MPPT-Karten mit Tracker-spezifischem Glow,
-- PV Total mit Orange-/Grün-Verlauf und verbessertem Textkontrast,
-- Batterie mit Grün-/Warmton-Glow,
-- Live-Leiste mit dezenten Farbzonen für PV, Haus, Netz und Batterie,
-- Vergütung mit blauem Glow,
-- Restlaufzeit mit violettem Glow,
-- adaptive Farben für kleine Tracker-/Prozenttexte,
-- adaptive Rahmen, Tracks, Inset-Flächen und neutrale Texte.
+## Requirements
 
-Die Power Flux Card behält ihr eigenes automatisches Theme-Verhalten.
-
-## Was ist neu seit V7?
-
-V7 unterstützt eine **beliebige Anzahl an MPPT-/PV-Trackern**. Die Tracker werden nur noch in einer Liste konfiguriert. Daraus erzeugt das Dashboard automatisch:
-
-- eine MPPT-Karte pro Tracker,
-- das responsive MPPT-Raster,
-- den individuellen Maximalwert jedes Gauges,
-- die Farben jedes Trackers,
-- den geteilten PV-Total-Balken,
-- die maximale PV-Gesamtleistung als Summe aller `maxKw`-Werte.
-
-Damit funktioniert das Dashboard z. B. mit 1, 2, 3 oder mehr Trackern, ohne den eigentlichen Dashboard-Code umzubauen.
-
-## Voraussetzungen
-
-Installiere über HACS unter **Frontend**:
+Install via HACS → Frontend:
 
 - `Button Card` (`custom:button-card`)
 - `Power Flux Card` (`custom:power-flux-card`)
 - `card-mod`
 
-Danach Home Assistant bzw. den Browser neu laden.
+Reload Home Assistant or your browser afterwards.
 
-## Schnelltest
+## Quick test
 
-Die Datei [`dashboard.yaml`](dashboard.yaml) ist als **eine komplette Lovelace-Karte** aufgebaut.
+[`dashboard.yaml`](dashboard.yaml) is one complete Lovelace card configuration.
 
 In Home Assistant:
 
-1. Dashboard bearbeiten.
-2. **Karte hinzufügen**.
-3. **Manuell** auswählen.
-4. Den vollständigen Inhalt von `dashboard.yaml` einfügen.
-5. Speichern.
-6. Unter Profil / Erscheinungsbild zwischen Hell und Dunkel wechseln und beide Varianten prüfen.
+1. Edit the target dashboard.
+2. Add a card.
+3. Select **Manual**.
+4. Paste the complete contents of `dashboard.yaml`.
+5. Save.
 
-Es müssen nicht mehrere Dateien oder Karten eingebunden werden.
+Do not paste it directly into the raw configuration editor for the entire dashboard.
 
-## Benutzerkonfiguration
+## Language
 
-Im `custom:button-card`-Teil befindet sich der Block:
-
-```js
-const CONFIG = {
-  trackers: [ ... ],
-  entities: { ... },
-  limits: { ... }
-};
-```
-
-### MPPT-/Tracker konfigurieren
-
-Jeder Tracker ist ein Objekt in `CONFIG.trackers`:
+Inside the `custom:button-card` configuration, set:
 
 ```js
-{
-  name: 'MPPT 1',
-  power: 'sensor.mein_mppt_1_power',
-  energyToday: 'sensor.mein_mppt_1_energy_today',
-  maxKw: 9.10,
-  colorStart: '#ff9800',
-  colorEnd: '#ffd740'
-}
+language: 'auto',
 ```
 
-Bedeutung:
+Supported values:
 
-- `name`: Anzeigename des Trackers.
-- `power`: aktuelle Leistung des Trackers in W oder kW.
-- `energyToday`: seit Mitternacht erzeugte Energie in Wh oder kWh.
-- `maxKw`: maximale/zugeordnete Generatorleistung dieses Trackers in kW.
-- `colorStart` / `colorEnd`: Farbe für Gauge und PV-Segment.
+- `auto` — follows the Home Assistant language; German is detected as `de`, everything else currently falls back to English
+- `de` — force German
+- `en` — force English
 
-### Nur ein MPPT
+Number formatting follows the selected language as well.
 
-Nur einen Eintrag in `trackers` stehen lassen. Die MPPT-Karte nutzt automatisch die verfügbare Breite.
+## MPPT / tracker configuration
 
-### Drei oder mehr MPPTs
+Trackers are configured in `CONFIG.trackers`:
 
-Weitere Tracker-Objekte ergänzen. Das Raster und der PV-Total-Balken werden automatisch erweitert.
+```js
+trackers: [
+  {
+    name: 'MPPT 1',
+    power: 'sensor.my_mppt_1_power',
+    energyToday: 'sensor.my_mppt_1_energy_today',
+    maxKw: 9.10,
+    colorStart: '#ff9800',
+    colorEnd: '#ffd740'
+  },
+  {
+    name: 'MPPT 2',
+    power: 'sensor.my_mppt_2_power',
+    energyToday: 'sensor.my_mppt_2_energy_today',
+    maxKw: 6.37,
+    colorStart: '#43a047',
+    colorEnd: '#76ff7a'
+  }
+]
+```
 
-## Beispielanlage im Repository
+Use one object for one tracker, add more objects for additional trackers. The grid, gauges and PV Total bar adapt automatically.
 
-Die Standardkonfiguration verwendet:
+## Example configuration included in the repository
 
-- MPPT 1: 9,10 kW
-- MPPT 2: 6,37 kW
-- automatisch berechnete PV-Gesamtleistung: 15,47 kW
-- Batterie: 12,50 kWh
+- MPPT 1: 9.10 kW
+- MPPT 2: 6.37 kW
+- calculated PV maximum: 15.47 kW
+- battery capacity: 12.50 kWh
 
-Weitere Details zu den benötigten Sensoren stehen in [`docs/ENTITY_REFERENCE.md`](docs/ENTITY_REFERENCE.md).
+## Sensor mapping
+
+The included SolaX entity IDs are only examples. Other inverter, battery or meter systems can be used as long as the mapped sensors provide the expected measurement.
+
+See:
+
+- [Entity reference](docs/ENTITY_REFERENCE.md)
+- [Home Assistant testing guide](docs/TESTING.md)
+- [Changelog](CHANGELOG.md)
+
+## Versioning
+
+The project now follows semantic pre-release versioning:
+
+- `v0.8.x-alpha` — active feature development and compatibility testing
+- `v0.9.x-beta` — feature-complete testing phase
+- `v1.0.0` — first stable release
