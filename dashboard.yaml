@@ -1,0 +1,3037 @@
+# solar_dashboard V6 - dashboard.yaml
+# Aktualisiert: 2026-08-07 20:22
+# Voraussetzungen: custom:button-card, custom:power-flux-card, card-mod
+
+type: vertical-stack
+cards:
+  - type: custom:power-flux-card
+    zoom: 0.62
+    compact_view: true
+    compact_glow: false
+    compact_bar_selfuse: false
+    compact_icons_in_bracket: true
+    horizontal_view: false
+    diamond_view: true
+    use_boxes: false
+    compact_details: true
+
+    consumer_1_unit_kw: false
+    consumer_2_unit_kw: false
+    consumer_3_unit_kw: false
+    show_consumer_always: false
+
+    consumer_1_hide_pipe: false
+    consumer_1_pipe_threshold: 0
+    consumer_2_hide_pipe: false
+    consumer_2_pipe_threshold: 0
+    consumer_3_hide_pipe: false
+    consumer_3_pipe_threshold: 0
+    consumer_4_hide_pipe: false
+    consumer_4_pipe_threshold: 0
+    consumer_5_hide_pipe: false
+    consumer_5_pipe_threshold: 0
+
+    show_donut_border: false
+    show_neon_glow: true
+    show_comet_tail: true
+    show_dashed_line: false
+    show_tinted_background: true
+    hide_inactive_flows: true
+
+    show_flow_rate_solar: true
+    show_flow_rate_grid: true
+    show_flow_rate_battery: true
+
+    show_label_solar: true
+    show_label_grid: false
+    show_label_battery: false
+    show_label_house: false
+
+    use_colored_values: true
+    hide_consumer_icons: false
+
+    entities:
+      solar: sensor.solax_inverter_pv_power_total
+      grid: sensor.solax_inverter_grid_import
+      grid_export: sensor.solax_inverter_grid_export
+      grid_combined: ""
+      battery: sensor.solax_inverter_battery_1_power_charge
+      battery_soc: sensor.solax_inverter_battery_1_capacity
+      battery_charge: ""
+      battery_discharge: ""
+      house: sensor.solax_inverter_house_load
+      consumer_1: ""
+      consumer_2: ""
+      consumer_3: ""
+      consumer_4: ""
+      secondary_grid: sensor.solax_inverter_today_s_export_energy
+      secondary_solar: sensor.solax_inverter_today_s_solar_energy
+      secondary_house: sensor.technikraum_solax_inverter_hausverbrauch_heute
+      tertiary_house: sensor.solax_inverter_today_s_import_energy
+      secondary_battery: sensor.solax_inverter_battery_input_energy_today
+      grid_to_battery: sensor.technikraum_solax_energy_dashboard_solax_grid_to_battery_power
+
+    solar_icon: mdi:weather-sunny
+    grid_icon: mdi:transmission-tower
+    battery_icon: mdi:battery-outline
+
+    color_solar: "#ffd740"
+    color_pipe_solar: "#ffd740"
+    color_text_solar: "#ffd740"
+    color_icon_solar: "#ffd740"
+
+    color_export: "#26c6da"
+    color_pipe_export: "#26c6da"
+    color_text_export: "#26c6da"
+    color_icon_export: "#26c6da"
+
+    color_grid: "#ff9800"
+    color_pipe_grid: "#ff9800"
+    color_text_grid: "#ff9800"
+    color_icon_grid: "#ff9800"
+
+    color_battery: "#76ff7a"
+    color_pipe_battery: "#76ff7a"
+    color_text_battery: "#76ff7a"
+    color_icon_battery: "#76ff7a"
+
+    color_house: "#64b5f6"
+    color_text_house: "#64b5f6"
+    color_icon_house: "#64b5f6"
+
+    battery_show_power: true
+    battery_charge_via_house: false
+
+    grid_options:
+      columns: full
+
+    card_mod:
+      style: |
+        ha-card {
+          background:
+            linear-gradient(
+              145deg,
+              rgba(16, 29, 39, 0.98),
+              rgba(5, 12, 18, 0.98)
+            ) !important;
+
+          border: 1px solid rgba(255, 255, 255, 0.08) !important;
+          border-radius: 24px !important;
+
+          box-shadow:
+            0 8px 24px rgba(0, 0, 0, 0.28) !important;
+
+          color: white !important;
+          overflow: hidden !important;
+
+          --primary-text-color: #ffffff;
+          --secondary-text-color: rgba(255, 255, 255, 0.62);
+          --card-background-color: transparent;
+          --ha-card-background: transparent;
+        }
+
+        ha-card * {
+          font-family: var(--primary-font-family);
+        }
+
+        @media screen and (max-width: 699px) {
+          ha-card {
+            border-radius: 19px !important;
+          }
+        }
+
+  - type: custom:button-card
+    show_icon: false
+    show_name: false
+    show_state: false
+    tap_action:
+      action: none
+    hold_action:
+      action: none
+    triggers_update: all
+    custom_fields:
+      dashboard: |
+        [[[
+
+          /*
+           * ========================================================
+           * BENUTZERKONFIGURATION – NUR DIESEN BLOCK ANPASSEN
+           * ========================================================
+           *
+           * Alle Entity-IDs dürfen aus beliebigen Integrationen stammen.
+           * Entscheidend ist nur, dass sie den beschriebenen Messwert liefern.
+           *
+           * Hinweise:
+           * - Leistung: W oder kW wird automatisch erkannt.
+           * - Energie: Wh oder kWh wird automatisch erkannt.
+           * - Optionale Sensoren dürfen als leerer String "" gesetzt werden.
+           */
+
+          const CONFIG = {
+            entities: {
+              /*
+               * PV / MPPT
+               */
+
+              // [PFLICHT] Aktuelle Leistung von MPPT 1.
+              // Messwert: momentane elektrische Leistung dieses PV-Eingangs.
+              // Einheit: W oder kW.
+              mppt1Power:
+                'sensor.solax_inverter_pv_power_1',
+
+              // [PFLICHT] Aktuelle Leistung von MPPT 2.
+              // Messwert: momentane elektrische Leistung dieses PV-Eingangs.
+              // Einheit: W oder kW.
+              mppt2Power:
+                'sensor.solax_inverter_pv_power_2',
+
+              // [PFLICHT] Heute erzeugte Energie von MPPT 1.
+              // Messwert: seit Mitternacht aufsummierter PV-Ertrag dieses Eingangs.
+              // Einheit: Wh oder kWh.
+              mppt1EnergyToday:
+                'sensor.technikraum_solax_inverter_mppt_1_tageszahler',
+
+              // [PFLICHT] Heute erzeugte Energie von MPPT 2.
+              // Messwert: seit Mitternacht aufsummierter PV-Ertrag dieses Eingangs.
+              // Einheit: Wh oder kWh.
+              mppt2EnergyToday:
+                'sensor.technikraum_solax_inverter_mppt_2_tageszahler',
+
+              // [PFLICHT] Aktuelle gesamte PV-Leistung.
+              // Messwert: Summe aller aktuell erzeugenden PV-Eingänge.
+              // Einheit: W oder kW.
+              pvPowerTotal:
+                'sensor.solax_inverter_pv_power_total',
+
+              // [PFLICHT] Gesamte heute erzeugte PV-Energie.
+              // Messwert: aufsummierte Solarproduktion seit Mitternacht.
+              // Einheit: Wh oder kWh.
+              pvEnergyToday:
+                'sensor.solax_inverter_today_s_solar_energy',
+
+              /*
+               * HAUS
+               */
+
+              // [PFLICHT] Aktueller Hausverbrauch.
+              // Messwert: momentane gesamte Verbraucherleistung des Hauses.
+              // Einheit: W oder kW.
+              housePower:
+                'sensor.solax_inverter_house_load',
+
+              // [OPTIONAL] Hausverbrauch seit Mitternacht.
+              // Messwert: aufsummierter Energieverbrauch des Hauses heute.
+              // Einheit: Wh oder kWh.
+              // Wenn "", wird der Tagesverbrauch aus PV, Netz und Batterie berechnet.
+              houseEnergyToday:
+                'sensor.technikraum_solax_inverter_hausverbrauch_heute',
+
+              /*
+               * NETZ
+               */
+
+              // [PFLICHT] Aktueller Netzbezug.
+              // Messwert: Leistung, die momentan AUS dem Stromnetz bezogen wird.
+              // Einheit: W oder kW. Idealerweise positiver Wert.
+              gridImportPower:
+                'sensor.solax_inverter_grid_import',
+
+              // [PFLICHT] Aktuelle Netzeinspeisung.
+              // Messwert: Leistung, die momentan INS Stromnetz eingespeist wird.
+              // Einheit: W oder kW. Idealerweise positiver Wert.
+              gridExportPower:
+                'sensor.solax_inverter_grid_export',
+
+              // [PFLICHT] Heute aus dem Netz bezogene Energie.
+              // Messwert: Netzimport seit Mitternacht.
+              // Einheit: Wh oder kWh.
+              gridImportEnergyToday:
+                'sensor.solax_inverter_today_s_import_energy',
+
+              // [PFLICHT] Heute ins Netz eingespeiste Energie.
+              // Messwert: Netzeinspeisung seit Mitternacht.
+              // Einheit: Wh oder kWh.
+              gridExportEnergyToday:
+                'sensor.solax_inverter_today_s_export_energy',
+
+              /*
+               * BATTERIE
+               */
+
+              // [PFLICHT] Ladezustand der Batterie.
+              // Messwert: State of Charge.
+              // Einheit: %.
+              batterySoc:
+                'sensor.solax_inverter_battery_1_capacity',
+
+              // [PFLICHT] Aktuelle Batterieleistung.
+              // Messwert: momentane Lade-/Entladeleistung.
+              // Einheit: W oder kW.
+              // Dashboard-Logik: positiv = Laden, negativ = Entladen.
+              batteryPower:
+                'sensor.solax_inverter_battery_1_power_charge',
+
+              // [PFLICHT] Aktuell noch gespeicherte/verfügbare Batterieenergie.
+              // Messwert: verbleibende Energie im Speicher.
+              // Einheit: Wh oder kWh.
+              batteryEnergyRemaining:
+                'sensor.solax_inverter_remaining_battery_energy',
+
+              // [PFLICHT] Heute in die Batterie geladene Energie.
+              // Messwert: aufsummierte Ladeenergie seit Mitternacht.
+              // Einheit: Wh oder kWh.
+              batteryChargeEnergyToday:
+                'sensor.solax_inverter_battery_input_energy_today',
+
+              // [PFLICHT] Heute aus der Batterie entladene Energie.
+              // Messwert: aufsummierte Entladeenergie seit Mitternacht.
+              // Einheit: Wh oder kWh.
+              batteryDischargeEnergyToday:
+                'sensor.solax_inverter_battery_output_energy_today',
+
+              /*
+               * OPTIONALE ZUSATZWERTE
+               */
+
+              // [OPTIONAL] Heutige Einspeisevergütung / Erlös.
+              // Messwert: monetärer Tageswert.
+              // Einheit: EUR.
+              compensationToday:
+                'sensor.ugendorf_electricity_costs_tages_einspeisung',
+
+              // [OPTIONAL] Geschätzte Restlaufzeit der Batterie.
+              // Messwert: Zahl oder bereits formatierter Text.
+              batteryRuntime:
+                'sensor.ugendorf_battery_restlaufzeit'
+            },
+
+            limits: {
+              // Installierte maximale PV-Gesamtleistung in kW.
+              pvMaxKw: 15.47,
+
+              // Maximale/zugeordnete Generatorleistung an MPPT 1 in kW.
+              mppt1MaxKw: 9.10,
+
+              // Maximale/zugeordnete Generatorleistung an MPPT 2 in kW.
+              mppt2MaxKw: 6.37,
+
+              // Nutzbare bzw. für die Anzeige gewünschte Batteriekapazität in kWh.
+              batteryCapacityKwh: 12.50
+            }
+          };
+
+          /*
+           * ========================================================
+           * HILFSFUNKTIONEN
+           * ========================================================
+           */
+
+          function getSensor(entityId) {
+            return states[entityId];
+          }
+
+          function getNumber(entityId, fallback = 0) {
+            const sensor = getSensor(entityId);
+            const value = Number.parseFloat(sensor?.state);
+
+            return Number.isFinite(value) ? value : fallback;
+          }
+
+          function getPower(entityId) {
+            const sensor = getSensor(entityId);
+            let value = Number.parseFloat(sensor?.state);
+
+            if (!Number.isFinite(value)) {
+              return 0;
+            }
+
+            const unit =
+              sensor?.attributes?.unit_of_measurement || '';
+
+            if (unit === 'W') {
+              value = value / 1000;
+            }
+
+            return value;
+          }
+
+          function getEnergy(entityId) {
+            const sensor = getSensor(entityId);
+            let value = Number.parseFloat(sensor?.state);
+
+            if (!Number.isFinite(value)) {
+              return 0;
+            }
+
+            const unit =
+              sensor?.attributes?.unit_of_measurement || '';
+
+            if (unit === 'Wh') {
+              value = value / 1000;
+            }
+
+            return value;
+          }
+
+          function formatNumber(
+            value,
+            minimumFractionDigits = 2,
+            maximumFractionDigits = 2
+          ) {
+            return value.toLocaleString('de-AT', {
+              minimumFractionDigits,
+              maximumFractionDigits
+            });
+          }
+
+          function formatPower(value) {
+            return formatNumber(value, 3, 3);
+          }
+
+          function formatEnergy(value) {
+            return formatNumber(value, 2, 2);
+          }
+
+          function createGauge(
+            value,
+            maximum,
+            gradientId,
+            glowId,
+            color
+          ) {
+            const percentage =
+              Math.min(Math.max(value / maximum, 0), 1);
+
+            const pathLength = 100;
+            const visibleLength = percentage * pathLength;
+            const remainingLength = pathLength - visibleLength;
+
+            const angle =
+              Math.PI - percentage * Math.PI;
+
+            const dotX =
+              100 + 80 * Math.cos(angle);
+
+            const dotY =
+              100 - 80 * Math.sin(angle);
+
+            return `
+              <svg
+                viewBox="0 0 200 108"
+                class="gauge-svg"
+              >
+                <defs>
+
+                  <linearGradient
+                    id="${gradientId}"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="0%"
+                  >
+                    <stop
+                      offset="0%"
+                      stop-color="${color.start}"
+                    />
+
+                    <stop
+                      offset="100%"
+                      stop-color="${color.end}"
+                    />
+                  </linearGradient>
+
+                  <filter id="${glowId}">
+
+                    <feGaussianBlur
+                      stdDeviation="3"
+                      result="blur"
+                    />
+
+                    <feMerge>
+                      <feMergeNode in="blur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+
+                  </filter>
+
+                </defs>
+
+                <path
+                  d="M 20 100 A 80 80 0 0 1 180 100"
+                  pathLength="100"
+                  fill="none"
+                  stroke="rgba(255,255,255,0.11)"
+                  stroke-width="13"
+                  stroke-linecap="round"
+                />
+
+                <path
+                  d="M 20 100 A 80 80 0 0 1 180 100"
+                  pathLength="100"
+                  fill="none"
+                  stroke="url(#${gradientId})"
+                  stroke-width="13"
+                  stroke-linecap="round"
+                  stroke-dasharray="
+                    ${visibleLength}
+                    ${remainingLength}
+                  "
+                  filter="url(#${glowId})"
+                />
+
+                <circle
+                  cx="${dotX}"
+                  cy="${dotY}"
+                  r="7"
+                  fill="${color.start}"
+                  filter="url(#${glowId})"
+                />
+
+              </svg>
+            `;
+          }
+
+          /*
+           * ========================================================
+           * AKTUELLE LEISTUNGEN
+           * ========================================================
+           */
+
+          const mppt1Power = getPower(
+            CONFIG.entities.mppt1Power
+          );
+
+          const mppt2Power = getPower(
+            CONFIG.entities.mppt2Power
+          );
+
+          const pvPower = getPower(
+            CONFIG.entities.pvPowerTotal
+          );
+
+          const housePower = getPower(
+            CONFIG.entities.housePower
+          );
+
+          const gridExportPower = getPower(
+            CONFIG.entities.gridExportPower
+          );
+
+          const gridImportPower = getPower(
+            CONFIG.entities.gridImportPower
+          );
+
+          const batteryPower = getPower(
+            CONFIG.entities.batteryPower
+          );
+
+          /*
+           * ========================================================
+           * TAGESENERGIEN
+           * ========================================================
+           */
+
+          const mppt1Today = getEnergy(
+            CONFIG.entities.mppt1EnergyToday
+          );
+
+          const mppt2Today = getEnergy(
+            CONFIG.entities.mppt2EnergyToday
+          );
+
+          const solarToday = getEnergy(
+            CONFIG.entities.pvEnergyToday
+          );
+
+          const exportToday = getEnergy(
+            CONFIG.entities.gridExportEnergyToday
+          );
+
+          const importToday = getEnergy(
+            CONFIG.entities.gridImportEnergyToday
+          );
+
+          const batteryInputToday = getEnergy(
+            CONFIG.entities.batteryChargeEnergyToday
+          );
+
+          const batteryOutputToday = getEnergy(
+            CONFIG.entities.batteryDischargeEnergyToday
+          );
+
+          /*
+           * Hausverbrauch aus Energiebilanz:
+           *
+           * PV
+           * + Netzimport
+           * + Batterieentladung
+           * - Netzeinspeisung
+           * - Batterieladung
+           */
+
+          const calculatedHouseToday = Math.max(
+            0,
+            solarToday +
+            importToday +
+            batteryOutputToday -
+            exportToday -
+            batteryInputToday
+          );
+
+          const houseToday =
+            CONFIG.entities.houseEnergyToday
+              ? getEnergy(CONFIG.entities.houseEnergyToday)
+              : calculatedHouseToday;
+
+          /*
+           * ========================================================
+           * BATTERIEWERTE
+           * ========================================================
+           */
+
+          const batterySoc = getNumber(
+            CONFIG.entities.batterySoc
+          );
+
+          const remainingBatteryEnergy = getEnergy(
+            CONFIG.entities.batteryEnergyRemaining
+          );
+
+          const normalizedSoc =
+            Math.min(Math.max(batterySoc, 0), 100);
+
+          let batteryStatus = 'STANDBY';
+          let batteryColor = '#90a4ae';
+          let batteryIcon = 'mdi:battery';
+
+          if (batteryPower > 0.05) {
+            batteryStatus = 'LÄDT';
+            batteryColor = '#76ff7a';
+            batteryIcon = 'mdi:battery-charging';
+          } else if (batteryPower < -0.05) {
+            batteryStatus = 'ENTLÄDT';
+            batteryColor = '#ffb43b';
+            batteryIcon = 'mdi:battery-arrow-down';
+          }
+
+          if (batterySoc <= 20) {
+            batteryColor = '#ff5252';
+          }
+
+          /*
+           * ========================================================
+           * NETZSTATUS
+           * ========================================================
+           */
+
+          let gridTitle = 'NETZ';
+          let gridCurrentPower = 0;
+          let gridIcon = 'mdi:transmission-tower';
+
+          if (gridExportPower > 0.001) {
+            gridTitle = 'EINSPEISUNG';
+            gridCurrentPower = gridExportPower;
+            gridIcon = 'mdi:transmission-tower-export';
+          } else if (gridImportPower > 0.001) {
+            gridTitle = 'NETZBEZUG';
+            gridCurrentPower = gridImportPower;
+            gridIcon = 'mdi:transmission-tower-import';
+          }
+
+          /*
+           * ========================================================
+           * WEITERE WERTE
+           * ========================================================
+           */
+
+          const compensation = getNumber(
+            CONFIG.entities.compensationToday
+          );
+
+          const runtimeSensor = getSensor(
+            CONFIG.entities.batteryRuntime
+          );
+
+          const runtimeRaw =
+            runtimeSensor?.state || 'Unbekannt';
+
+          const runtime =
+            runtimeRaw === 'unknown' ||
+            runtimeRaw === 'unavailable'
+              ? 'Unbekannt'
+              : runtimeRaw;
+
+          /*
+           * ========================================================
+           * MPPT-GRAFIKEN
+           * ========================================================
+           */
+
+          const mppt1Gauge = createGauge(
+            mppt1Power,
+            CONFIG.limits.mppt1MaxKw,
+            'mppt1-gradient',
+            'mppt1-glow',
+            {
+              start: '#ff9800',
+              end: '#ffd740'
+            }
+          );
+
+          const mppt2Gauge = createGauge(
+            mppt2Power,
+            CONFIG.limits.mppt2MaxKw,
+            'mppt2-gradient',
+            'mppt2-glow',
+            {
+              start: '#43a047',
+              end: '#76ff7a'
+            }
+          );
+
+
+          /*
+           * ========================================================
+           * V5 – QUERBALKEN PV TOTAL / BATTERIE
+           * ========================================================
+           */
+
+          const pvMaximum = CONFIG.limits.pvMaxKw;
+          const pvPercentRaw =
+            pvMaximum > 0 ? (pvPower / pvMaximum) * 100 : 0;
+
+          const pvPercentBar =
+            Math.min(Math.max(pvPercentRaw, 0), 100);
+
+          const mpptTotalPower =
+            Math.max(mppt1Power + mppt2Power, 0);
+
+          const pvScale =
+            mpptTotalPower > pvMaximum && mpptTotalPower > 0
+              ? pvMaximum / mpptTotalPower
+              : 1;
+
+          const mppt1BarWidth =
+            Math.min(
+              Math.max(
+                ((mppt1Power * pvScale) / pvMaximum) * 100,
+                0
+              ),
+              100
+            );
+
+          const mppt2BarWidth =
+            Math.min(
+              Math.max(
+                ((mppt2Power * pvScale) / pvMaximum) * 100,
+                0
+              ),
+              100
+            );
+
+          const batteryMaximum = CONFIG.limits.batteryCapacityKwh;
+
+          const batteryEnergyPercentRaw =
+            batteryMaximum > 0
+              ? (remainingBatteryEnergy / batteryMaximum) * 100
+              : 0;
+
+          const batteryBarPercent =
+            Math.min(
+              Math.max(batteryEnergyPercentRaw, 0),
+              100
+            );
+
+          /*
+           * ========================================================
+           * AUSGABE
+           * ========================================================
+           */
+
+          return `
+            <div class="solar-dashboard">
+
+              <!-- =============================================== -->
+              <!-- MPPT 1 -->
+              <!-- =============================================== -->
+
+              <div class="panel mppt-panel mppt1-panel">
+
+                <div class="mppt-title">
+                  MPPT 1
+                </div>
+
+                <div class="mppt-gauge">
+
+                  ${mppt1Gauge}
+
+                  <div class="mppt-current-value">
+                    ${formatPower(mppt1Power)}
+                    <span>kW</span>
+                  </div>
+
+                </div>
+
+                <div class="mppt-daily-box">
+
+                  <ha-icon
+                    icon="mdi:lightning-bolt"
+                  ></ha-icon>
+
+                  <div>
+
+                    <div class="mppt-daily-value">
+                      ${formatEnergy(mppt1Today)} kWh
+                    </div>
+
+                    <div class="small-label">
+                      HEUTE
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+              <!-- =============================================== -->
+              <!-- MPPT 2 -->
+              <!-- =============================================== -->
+
+              <div class="panel mppt-panel mppt2-panel">
+
+                <div class="mppt-title">
+                  MPPT 2
+                </div>
+
+                <div class="mppt-gauge">
+
+                  ${mppt2Gauge}
+
+                  <div class="mppt-current-value">
+                    ${formatPower(mppt2Power)}
+                    <span>kW</span>
+                  </div>
+
+                </div>
+
+                <div class="mppt-daily-box">
+
+                  <ha-icon
+                    icon="mdi:lightning-bolt"
+                  ></ha-icon>
+
+                  <div>
+
+                    <div class="mppt-daily-value">
+                      ${formatEnergy(mppt2Today)} kWh
+                    </div>
+
+                    <div class="small-label">
+                      HEUTE
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+              <!-- =============================================== -->
+              <!-- LIVE-ENERGIEFLUSS -->
+              <!-- =============================================== -->
+
+              <div class="panel live-panel">
+
+                <div class="live-grid">
+
+                  <!-- PV -->
+
+                  <div class="live-item live-pv">
+
+                    <ha-icon
+                      icon="mdi:solar-power"
+                    ></ha-icon>
+
+                    <div class="live-title">
+                      PV
+                    </div>
+
+                    <div class="live-current">
+                      ${formatPower(pvPower)}
+                      <span>kW</span>
+                    </div>
+
+                    <div class="live-double-value">
+                      <span>
+                        Heute ${formatEnergy(solarToday)} kWh
+                      </span>
+                      <span>
+                        Max. ${formatNumber(CONFIG.limits.pvMaxKw, 2, 2)} kW
+                      </span>
+                    </div>
+
+                  </div>
+
+                  <!-- HAUS -->
+
+                  <div class="live-item live-house">
+
+                    <ha-icon
+                      icon="mdi:home-lightning-bolt"
+                    ></ha-icon>
+
+                    <div class="live-title">
+                      HAUS
+                    </div>
+
+                    <div class="live-current">
+                      ${formatPower(housePower)}
+                      <span>kW</span>
+                    </div>
+
+                    <div class="live-double-value">
+                      <span>
+                        Heute ${formatEnergy(houseToday)} kWh
+                      </span>
+                      <span>
+                        Aktuell ${formatPower(housePower)} kW
+                      </span>
+                    </div>
+
+                  </div>
+
+                  <!-- NETZ -->
+
+                  <div class="live-item live-grid-value">
+
+                    <ha-icon
+                      icon="${gridIcon}"
+                    ></ha-icon>
+
+                    <div class="live-title">
+                      NETZ
+                    </div>
+
+                    <div class="live-current">
+                      ${formatPower(
+                        Math.abs(gridCurrentPower)
+                      )}
+                      <span>kW</span>
+                    </div>
+
+                    <div class="live-double-value">
+
+                      <span>
+                        Import
+                        ${formatEnergy(importToday)}
+                        kWh
+                      </span>
+
+                      <span>
+                        Export
+                        ${formatEnergy(exportToday)}
+                        kWh
+                      </span>
+
+                    </div>
+
+                  </div>
+
+                  <!-- BATTERIE -->
+
+                  <div class="live-item live-battery">
+
+                    <ha-icon
+                      icon="${batteryIcon}"
+                    ></ha-icon>
+
+                    <div class="live-title">
+                      BATTERIE
+                    </div>
+
+                    <div class="live-current">
+                      ${formatPower(
+                        Math.abs(batteryPower)
+                      )}
+                      <span>kW</span>
+                    </div>
+
+                    <div class="live-double-value">
+
+                      <span>
+                        Laden
+                        ${formatEnergy(batteryInputToday)}
+                        kWh
+                      </span>
+
+                      <span>
+                        Entladen
+                        ${formatEnergy(batteryOutputToday)}
+                        kWh
+                      </span>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+              <!-- =============================================== -->
+              <!-- PV TOTAL – V5 QUERBALKEN -->
+              <!-- =============================================== -->
+
+              <div class="panel pv-total-panel v5-bar-panel">
+
+                <div class="v5-bar-header centered-header">
+
+                  <div class="v5-bar-title">
+                    PV TOTAL
+                  </div>
+
+                  <div class="v5-bar-main">
+                    ${formatPower(pvPower)}
+                    <span>kW</span>
+                  </div>
+
+                </div>
+
+                <div class="pv-split-track">
+
+                  <div
+                    class="pv-segment mppt1-segment"
+                    style="width:${mppt1BarWidth}%;"
+                  ></div>
+
+                  <div
+                    class="pv-segment mppt2-segment"
+                    style="width:${mppt2BarWidth}%;"
+                  ></div>
+
+                </div>
+
+                <div class="v5-bar-footer">
+
+                  <span class="mppt1-footer">
+                    1&nbsp; ${formatPower(mppt1Power)}
+                  </span>
+
+                  <span class="v5-footer-center pv-percent">
+                    ${formatNumber(
+                      pvPercentRaw,
+                      0,
+                      0
+                    )} %
+                    ·
+                    ${formatEnergy(solarToday)} kWh heute
+                  </span>
+
+                  <span class="mppt2-footer">
+                    2&nbsp; ${formatPower(mppt2Power)}
+                  </span>
+
+                </div>
+
+              </div>
+
+              <!-- =============================================== -->
+              <!-- BATTERIE – V5 QUERBALKEN -->
+              <!-- =============================================== -->
+
+              <div class="panel battery-panel v5-bar-panel">
+
+                <div class="v5-bar-header centered-header">
+
+                  <div class="v5-bar-title">
+                    BATTERIE
+                  </div>
+
+                  <div class="v5-bar-main">
+                    ${formatNumber(
+                      batterySoc,
+                      0,
+                      0
+                    )}
+                    <span>%</span>
+                  </div>
+
+                </div>
+
+                <div class="battery-horizontal-track">
+
+                  <div
+                    class="battery-horizontal-fill"
+                    style="
+                      width:${batteryBarPercent}%;
+                      background:${batteryColor};
+                      box-shadow:0 0 10px ${batteryColor};
+                    "
+                  ></div>
+
+                </div>
+
+                <div class="v5-bar-footer">
+
+                  <span>
+                    ${formatEnergy(remainingBatteryEnergy)}
+                    / ${formatNumber(CONFIG.limits.batteryCapacityKwh, 2, 2)} kWh
+                  </span>
+
+                  <span
+                    class="v5-footer-center"
+                    style="color:${batteryColor};"
+                  >
+                    ${batteryStatus}
+                  </span>
+
+                  <span>
+                    ${formatPower(
+                      Math.abs(batteryPower)
+                    )} kW
+                  </span>
+
+                </div>
+
+              </div>
+
+              <!-- =============================================== -->
+              <!-- VERGÜTUNG -->
+              <!-- =============================================== -->
+
+              <div class="panel information-panel payment-panel">
+
+                <ha-icon
+                  icon="mdi:transmission-tower-export"
+                ></ha-icon>
+
+                <div class="information-content">
+
+                  <div class="information-title">
+                    Vergütung heute
+                  </div>
+
+                  <div class="information-value">
+                    ${formatNumber(
+                      compensation,
+                      2,
+                      2
+                    )} €
+                  </div>
+
+                  <div class="information-subtitle">
+                    Einspeiseerlös
+                  </div>
+
+                </div>
+
+              </div>
+
+              <!-- =============================================== -->
+              <!-- RESTLAUFZEIT -->
+              <!-- =============================================== -->
+
+              <div class="panel information-panel runtime-panel">
+
+                <ha-icon
+                  icon="mdi:battery-clock-outline"
+                ></ha-icon>
+
+                <div class="information-content">
+
+                  <div class="information-title">
+                    Restlaufzeit
+                  </div>
+
+                  <div class="information-value">
+                    ${runtime}
+                  </div>
+
+                  <div class="information-subtitle">
+                    Batterie
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+          `;
+        ]]]
+    styles:
+      card:
+        - padding: 0
+        - border: none
+        - box-shadow: none
+        - background: transparent
+        - overflow: visible
+      grid:
+        - grid-template-areas: '"dashboard"'
+        - grid-template-columns: 1fr
+        - grid-template-rows: auto
+      custom_fields:
+        dashboard:
+          - width: 100%
+          - overflow: visible
+    extra_styles: |
+      /*
+       * ==========================================================
+       * GRUNDLAYOUT
+       * ==========================================================
+       */
+
+      .solar-dashboard {
+        box-sizing: border-box;
+        display: grid;
+        width: 100%;
+        gap: 10px;
+        color: white;
+
+        grid-template-columns:
+          repeat(2, minmax(0, 1fr));
+
+        grid-template-areas:
+          "mppt1 mppt2"
+          "pv battery"
+          "live live"
+          "payment runtime";
+      }
+
+      .panel {
+        box-sizing: border-box;
+        min-width: 0;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 24px;
+        background:
+          linear-gradient(
+            145deg,
+            rgba(16,29,39,0.98),
+            rgba(5,12,18,0.98)
+          );
+        box-shadow:
+          0 8px 24px rgba(0,0,0,0.28);
+      }
+
+      .mppt1-panel {
+        grid-area: mppt1;
+      }
+
+      .mppt2-panel {
+        grid-area: mppt2;
+      }
+
+      .live-panel {
+        grid-area: live;
+      }
+
+      .pv-total-panel {
+        grid-area: pv;
+      }
+
+      .battery-panel {
+        grid-area: battery;
+      }
+
+      .payment-panel {
+        grid-area: payment;
+      }
+
+      .runtime-panel {
+        grid-area: runtime;
+      }
+
+      /*
+       * ==========================================================
+       * MPPT
+       * ==========================================================
+       */
+
+      .mppt-panel {
+        display: flex;
+        flex-direction: column;
+        height: 225px;
+        padding: 15px 14px 13px 14px;
+      }
+
+      .mppt-title {
+        text-align: center;
+        font-size: 18px;
+        font-weight: 700;
+        line-height: 1;
+      }
+
+      .mppt-gauge {
+        position: relative;
+        height: 112px;
+        margin-top: 3px;
+      }
+
+      .gauge-svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+      }
+
+      .mppt-current-value {
+        position: absolute;
+        right: 0;
+        bottom: 5px;
+        left: 0;
+        text-align: center;
+        font-size: 29px;
+        font-weight: 700;
+        line-height: 1;
+        white-space: nowrap;
+      }
+
+      .mppt-current-value span {
+        font-size: 13px;
+        opacity: 0.70;
+      }
+
+      .mppt-daily-box {
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        width: 82%;
+        min-height: 48px;
+        margin: auto auto 0 auto;
+        padding: 7px 8px;
+        border: 1px solid rgba(255,255,255,0.09);
+        border-radius: 16px;
+        background: rgba(255,255,255,0.035);
+        text-align: center;
+      }
+
+      .mppt1-panel .mppt-daily-box ha-icon {
+        color: #ffd740;
+      }
+
+      .mppt2-panel .mppt-daily-box ha-icon {
+        color: #76ff7a;
+      }
+
+      .mppt-daily-box ha-icon {
+        width: 25px;
+        height: 25px;
+      }
+
+      .mppt-daily-value {
+        font-size: 15px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      /*
+       * ==========================================================
+       * LIVE-ENERGIEFLUSS
+       * ==========================================================
+       */
+
+      .live-panel {
+        height: 155px;
+      }
+
+      .live-grid {
+        box-sizing: border-box;
+        display: grid;
+        grid-template-columns:
+          repeat(4, minmax(0, 1fr));
+        width: 100%;
+        height: 100%;
+        padding: 12px 5px;
+      }
+
+      .live-item {
+        box-sizing: border-box;
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 0 5px;
+        border-right:
+          1px solid rgba(255,255,255,0.10);
+        text-align: center;
+      }
+
+      .live-item:last-child {
+        border-right: none;
+      }
+
+      .live-item ha-icon {
+        width: 25px;
+        height: 25px;
+        margin-bottom: 5px;
+      }
+
+      .live-title {
+        width: 100%;
+        overflow: hidden;
+        font-size: 7.5px;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        opacity: 0.68;
+      }
+
+      .live-current {
+        margin-top: 5px;
+        font-size: 17px;
+        font-weight: 700;
+        line-height: 1;
+        white-space: nowrap;
+      }
+
+      .live-current span {
+        font-size: 9px;
+        opacity: 0.68;
+      }
+
+      .live-daily,
+      .live-double-value {
+        width: 100%;
+        margin-top: 7px;
+        overflow: hidden;
+        color: rgba(255,255,255,0.62);
+        font-size: 7.5px;
+        font-weight: 600;
+        line-height: 1.3;
+        white-space: nowrap;
+      }
+
+      .live-double-value {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .live-double-value span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .live-pv ha-icon,
+      .live-pv .live-current {
+        color: #ffd740;
+      }
+
+      .live-house ha-icon,
+      .live-house .live-current {
+        color: #64b5f6;
+      }
+
+      .live-grid-value ha-icon,
+      .live-grid-value .live-current {
+        color: #26c6da;
+      }
+
+      .live-battery ha-icon,
+      .live-battery .live-current {
+        color: #76ff7a;
+      }
+
+      /*
+       * ==========================================================
+       * PV TOTAL
+       * ==========================================================
+       */
+
+      .pv-total-panel {
+        display: grid;
+        grid-template-columns: 65px 1fr auto;
+        align-items: center;
+        height: 145px;
+        padding: 18px 24px;
+
+        background:
+          radial-gradient(
+            circle at 85% 120%,
+            rgba(255,193,7,0.26),
+            transparent 48%
+          ),
+          linear-gradient(
+            145deg,
+            rgba(16,29,39,0.98),
+            rgba(5,12,18,0.98)
+          );
+      }
+
+      .pv-total-icon ha-icon {
+        width: 45px;
+        height: 45px;
+        color: #ffd740;
+        filter:
+          drop-shadow(
+            0 0 9px rgba(255,215,64,0.45)
+          );
+      }
+
+      .section-label {
+        font-size: 13px;
+        letter-spacing: 1.2px;
+        opacity: 0.58;
+      }
+
+      .pv-total-power {
+        margin-top: 3px;
+        font-size: 34px;
+        font-weight: 700;
+        line-height: 1;
+        white-space: nowrap;
+      }
+
+      .pv-total-power span {
+        font-size: 16px;
+        opacity: 0.72;
+      }
+
+      .pv-total-status {
+        margin-top: 8px;
+        color: #ffd740;
+        font-size: 10px;
+        letter-spacing: 1.3px;
+      }
+
+      .pv-total-daily {
+        padding-left: 12px;
+        text-align: right;
+      }
+
+      .pv-total-daily-value {
+        margin-top: 5px;
+        font-size: 17px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      /*
+       * ==========================================================
+       * BATTERIE
+       * ==========================================================
+       */
+
+      .battery-panel {
+        display: grid;
+        grid-template-columns: 68px 1fr auto;
+        align-items: center;
+        height: 165px;
+        padding: 18px 24px;
+
+        background:
+          radial-gradient(
+            circle at 5% 50%,
+            rgba(118,255,122,0.12),
+            transparent 36%
+          ),
+          linear-gradient(
+            145deg,
+            rgba(16,29,39,0.98),
+            rgba(5,12,18,0.98)
+          );
+      }
+
+      .battery-symbol {
+        position: relative;
+        width: 43px;
+        height: 82px;
+      }
+
+      .battery-tip {
+        position: absolute;
+        top: -5px;
+        left: 13px;
+        width: 17px;
+        height: 6px;
+        border-radius: 3px 3px 0 0;
+        background: rgba(255,255,255,0.68);
+      }
+
+      .battery-body {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        border: 3px solid rgba(255,255,255,0.68);
+        border-radius: 8px;
+        background: rgba(255,255,255,0.05);
+      }
+
+      .battery-fill {
+        position: absolute;
+        right: 4px;
+        bottom: 4px;
+        left: 4px;
+        min-height: 3px;
+        border-radius: 4px;
+        transition: height 0.7s ease;
+      }
+
+      .battery-soc {
+        margin-top: 4px;
+        font-size: 39px;
+        font-weight: 700;
+        line-height: 1;
+      }
+
+      .battery-soc span {
+        font-size: 18px;
+      }
+
+      .battery-status {
+        margin-top: 9px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+      }
+
+      .battery-details {
+        padding-left: 12px;
+        text-align: right;
+      }
+
+      .battery-detail-value {
+        margin-top: 3px;
+        font-size: 16px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      .battery-detail-gap {
+        margin-top: 12px;
+      }
+
+      /*
+       * ==========================================================
+       * VERGÜTUNG UND RESTLAUFZEIT
+       * ==========================================================
+       */
+
+      .information-panel {
+        display: grid;
+        grid-template-columns: 54px 1fr;
+        align-items: center;
+        height: 125px;
+        padding: 16px 20px;
+      }
+
+      .information-panel ha-icon {
+        width: 36px;
+        height: 36px;
+      }
+
+      .payment-panel {
+        background:
+          linear-gradient(
+            145deg,
+            rgba(12,31,46,0.98),
+            rgba(4,12,18,0.98)
+          );
+      }
+
+      .payment-panel ha-icon,
+      .payment-panel .information-title {
+        color: #64b5f6;
+      }
+
+      .payment-panel ha-icon {
+        filter:
+          drop-shadow(
+            0 0 7px rgba(66,165,245,0.50)
+          );
+      }
+
+      .runtime-panel {
+        background:
+          linear-gradient(
+            145deg,
+            rgba(28,17,49,0.98),
+            rgba(7,9,19,0.98)
+          );
+      }
+
+      .runtime-panel ha-icon,
+      .runtime-panel .information-title {
+        color: #b388ff;
+      }
+
+      .runtime-panel ha-icon {
+        filter:
+          drop-shadow(
+            0 0 7px rgba(171,108,255,0.50)
+          );
+      }
+
+      .information-title {
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .information-value {
+        margin-top: 4px;
+        font-size: 24px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      .information-subtitle {
+        margin-top: 4px;
+        color: rgba(255,255,255,0.48);
+        font-size: 10px;
+      }
+
+      .small-label {
+        font-size: 9px;
+        letter-spacing: 1px;
+        opacity: 0.48;
+      }
+
+      /*
+       * ==========================================================
+       * QUERFORMAT / TABLET / DESKTOP
+       * ==========================================================
+       */
+
+      @media screen and (min-width: 700px) {
+
+        .solar-dashboard {
+          gap: 12px;
+
+          grid-template-columns:
+            repeat(12, minmax(0, 1fr));
+
+          grid-template-areas:
+            "mppt1 mppt1 mppt1
+             mppt2 mppt2 mppt2
+             live live live live live live"
+
+            "pv pv pv pv pv pv
+             battery battery battery battery battery battery"
+
+            "payment payment payment payment payment payment
+             runtime runtime runtime runtime runtime runtime";
+        }
+
+        .mppt-panel,
+        .live-panel {
+          height: 195px;
+        }
+
+        .mppt-panel {
+          padding: 13px 12px 12px 12px;
+        }
+
+        .mppt-gauge {
+          height: 103px;
+        }
+
+        .mppt-daily-box {
+          min-height: 42px;
+        }
+
+        .live-grid {
+          padding: 15px 8px;
+        }
+
+        .live-item {
+          padding: 0 9px;
+        }
+
+        .live-item ha-icon {
+          width: 30px;
+          height: 30px;
+          margin-bottom: 8px;
+        }
+
+        .live-title {
+          font-size: 9px;
+        }
+
+        .live-current {
+          margin-top: 8px;
+          font-size: 21px;
+        }
+
+        .live-current span {
+          font-size: 11px;
+        }
+
+        .live-daily,
+        .live-double-value {
+          margin-top: 9px;
+          font-size: 9px;
+        }
+
+        .pv-total-panel,
+        .battery-panel {
+          height: 155px;
+        }
+
+        .information-panel {
+          height: 115px;
+        }
+      }
+
+      /*
+       * ==========================================================
+       * BREITER DESKTOP
+       * ==========================================================
+       */
+
+      @media screen and (min-width: 1200px) {
+
+        .solar-dashboard {
+          max-width: 1600px;
+          margin: 0 auto;
+          gap: 14px;
+        }
+
+        .mppt-panel,
+        .live-panel {
+          height: 215px;
+        }
+
+        .mppt-title {
+          font-size: 20px;
+        }
+
+        .mppt-current-value {
+          font-size: 33px;
+        }
+
+        .live-item ha-icon {
+          width: 34px;
+          height: 34px;
+        }
+
+        .live-title {
+          font-size: 10px;
+        }
+
+        .live-current {
+          font-size: 24px;
+        }
+
+        .live-daily,
+        .live-double-value {
+          font-size: 10px;
+        }
+
+        .pv-total-panel,
+        .battery-panel {
+          height: 165px;
+        }
+
+        .information-panel {
+          height: 125px;
+        }
+      }
+
+      /*
+       * ==========================================================
+       * SEHR SCHMALE HANDYS
+       * ==========================================================
+       */
+
+      @media screen and (max-width: 420px) {
+
+        .solar-dashboard {
+          gap: 8px;
+        }
+
+        .panel {
+          border-radius: 20px;
+        }
+
+        .mppt-panel {
+          height: 210px;
+          padding-right: 9px;
+          padding-left: 9px;
+        }
+
+        .mppt-title {
+          font-size: 16px;
+        }
+
+        .mppt-current-value {
+          font-size: 25px;
+        }
+
+        .mppt-daily-box {
+          width: 92%;
+        }
+
+        .mppt-daily-value {
+          font-size: 13px;
+        }
+
+        .live-panel {
+          height: 160px;
+        }
+
+        .live-item {
+          padding-right: 3px;
+          padding-left: 3px;
+        }
+
+        .live-item ha-icon {
+          width: 23px;
+          height: 23px;
+        }
+
+        .live-title {
+          font-size: 6.5px;
+        }
+
+        .live-current {
+          font-size: 15px;
+        }
+
+        .live-daily,
+        .live-double-value {
+          font-size: 6.8px;
+        }
+
+        .pv-total-panel {
+          grid-template-columns: 52px 1fr auto;
+          padding-right: 16px;
+          padding-left: 16px;
+        }
+
+        .pv-total-icon ha-icon {
+          width: 38px;
+          height: 38px;
+        }
+
+        .pv-total-power {
+          font-size: 29px;
+        }
+
+        .pv-total-daily-value {
+          font-size: 14px;
+        }
+
+        .battery-panel {
+          grid-template-columns: 56px 1fr auto;
+          padding-right: 16px;
+          padding-left: 16px;
+        }
+
+        .battery-symbol {
+          width: 37px;
+          height: 72px;
+        }
+
+        .battery-soc {
+          font-size: 34px;
+        }
+
+        .battery-detail-value {
+          font-size: 13px;
+        }
+
+        .information-panel {
+          grid-template-columns: 44px 1fr;
+          padding-right: 12px;
+          padding-left: 12px;
+        }
+
+        .information-panel ha-icon {
+          width: 31px;
+          height: 31px;
+        }
+
+        .information-title {
+          font-size: 11px;
+        }
+
+        .information-value {
+          font-size: 21px;
+        }
+      }
+
+      
+      /*
+       * ==========================================================
+       * RESPONSIVE KORREKTUR
+       * Aktualisiert: 2026-08-06 21:50
+       * ==========================================================
+       */
+
+      /* Gesamtes Dashboard wirklich auf volle Breite setzen */
+
+      .solar-dashboard {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+      }
+
+
+      /*
+       * ==========================================================
+       * IPHONE HOCHFORMAT
+       * ==========================================================
+       */
+
+      @media screen and (max-width: 699px) {
+
+        .solar-dashboard {
+          gap: 7px;
+
+          grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+          grid-template-areas:
+            "mppt1 mppt2"
+            "pv battery"
+            "live live"
+            "payment runtime";
+        }
+
+        .panel {
+          border-radius: 19px;
+        }
+
+        /* MPPT kompakter */
+
+        .mppt-panel {
+          height: 190px;
+          padding: 11px 9px 9px 9px;
+        }
+
+        .mppt-title {
+          font-size: 15px;
+        }
+
+        .mppt-gauge {
+          height: 92px;
+          margin-top: 1px;
+        }
+
+        .mppt-current-value {
+          bottom: 2px;
+          font-size: 24px;
+        }
+
+        .mppt-current-value span {
+          font-size: 10px;
+        }
+
+        .mppt-daily-box {
+          width: 94%;
+          min-height: 39px;
+          padding: 4px 5px;
+          border-radius: 12px;
+        }
+
+        .mppt-daily-box ha-icon {
+          width: 20px;
+          height: 20px;
+        }
+
+        .mppt-daily-value {
+          font-size: 12px;
+        }
+
+        .small-label {
+          font-size: 7px;
+        }
+
+        /* Live-Leiste */
+
+        .live-panel {
+          height: 92px;
+        }
+
+        .live-grid {
+          padding: 8px 3px;
+        }
+
+        .live-item {
+          padding: 0 3px;
+        }
+
+        .live-item ha-icon {
+          width: 21px;
+          height: 21px;
+          margin-bottom: 4px;
+        }
+
+        .live-title {
+          font-size: 6px;
+          letter-spacing: 0;
+        }
+
+        .live-current {
+          margin-top: 4px;
+          font-size: 14px;
+        }
+
+        .live-current span {
+          font-size: 7px;
+        }
+
+        .live-daily,
+        .live-double-value {
+          margin-top: 5px;
+          font-size: 6.2px;
+          line-height: 1.25;
+        }
+
+        /* PV Total */
+
+        .pv-total-panel {
+          height: 92px;
+          grid-template-columns: 48px 1fr auto;
+          padding: 11px 14px;
+        }
+
+        .pv-total-icon ha-icon {
+          width: 35px;
+          height: 35px;
+        }
+
+        .section-label {
+          font-size: 10px;
+        }
+
+        .pv-total-power {
+          font-size: 27px;
+        }
+
+        .pv-total-power span {
+          font-size: 12px;
+        }
+
+        .pv-total-status {
+          margin-top: 5px;
+          font-size: 8px;
+        }
+
+        .pv-total-daily {
+          padding-left: 7px;
+        }
+
+        .pv-total-daily-value {
+          font-size: 13px;
+        }
+
+        /* Batterie */
+
+        .battery-panel {
+          height: 92px;
+          grid-template-columns: 50px 1fr auto;
+          padding: 12px 14px;
+        }
+
+        .battery-symbol {
+          width: 34px;
+          height: 66px;
+        }
+
+        .battery-tip {
+          left: 10px;
+          width: 14px;
+        }
+
+        .battery-soc {
+          font-size: 30px;
+        }
+
+        .battery-soc span {
+          font-size: 14px;
+        }
+
+        .battery-status {
+          margin-top: 6px;
+          font-size: 9px;
+        }
+
+        .battery-details {
+          padding-left: 7px;
+        }
+
+        .battery-detail-value {
+          font-size: 12px;
+        }
+
+        .battery-detail-gap {
+          margin-top: 8px;
+        }
+
+        /* Vergütung und Restlaufzeit */
+
+        .information-panel {
+          height: 92px;
+          grid-template-columns: 37px 1fr;
+          padding: 9px 10px;
+        }
+
+        .information-panel ha-icon {
+          width: 27px;
+          height: 27px;
+        }
+
+        .information-title {
+          font-size: 9px;
+        }
+
+        .information-value {
+          margin-top: 2px;
+          font-size: 18px;
+        }
+
+        .information-subtitle {
+          margin-top: 2px;
+          font-size: 8px;
+        }
+      }
+
+
+      /*
+       * ==========================================================
+       * QUERFORMAT, TABLET UND DESKTOP
+       * ==========================================================
+       */
+
+      @media screen and (min-width: 700px) {
+
+        .solar-dashboard {
+          width: 100%;
+          max-width: none;
+          margin: 0;
+          gap: 10px;
+
+          grid-template-columns:
+            repeat(12, minmax(0, 1fr));
+
+          grid-template-areas:
+            "mppt1 mppt1 mppt1 mppt2 mppt2 mppt2 live live live live live live"
+            "pv pv pv pv pv pv battery battery battery battery battery battery"
+            "payment payment payment payment payment payment runtime runtime runtime runtime runtime runtime";
+        }
+
+        /* Oberste Reihe gleich hoch */
+
+        .mppt-panel,
+        .live-panel {
+          height: 180px;
+        }
+
+        .mppt-panel {
+          padding: 11px 12px 10px 12px;
+        }
+
+        .mppt-title {
+          font-size: 16px;
+        }
+
+        .mppt-gauge {
+          height: 88px;
+        }
+
+        .mppt-current-value {
+          bottom: 1px;
+          font-size: 25px;
+        }
+
+        .mppt-daily-box {
+          width: 82%;
+          min-height: 37px;
+          padding: 4px 7px;
+        }
+
+        .mppt-daily-value {
+          font-size: 12px;
+        }
+
+        /* Live-Leiste nutzt den breiten rechten Bereich */
+
+        .live-grid {
+          padding: 10px 6px;
+        }
+
+        .live-item {
+          padding: 0 8px;
+        }
+
+        .live-item ha-icon {
+          width: 27px;
+          height: 27px;
+          margin-bottom: 6px;
+        }
+
+        .live-title {
+          font-size: 8px;
+        }
+
+        .live-current {
+          margin-top: 6px;
+          font-size: 18px;
+        }
+
+        .live-current span {
+          font-size: 9px;
+        }
+
+        .live-daily,
+        .live-double-value {
+          margin-top: 7px;
+          font-size: 8px;
+        }
+
+        /* Zweite Reihe */
+
+        .pv-total-panel,
+        .battery-panel {
+          height: 125px;
+        }
+
+        .pv-total-panel {
+          grid-template-columns: 55px 1fr auto;
+          padding: 13px 19px;
+        }
+
+        .pv-total-icon ha-icon {
+          width: 39px;
+          height: 39px;
+        }
+
+        .pv-total-power {
+          font-size: 29px;
+        }
+
+        .battery-panel {
+          grid-template-columns: 55px 1fr auto;
+          padding: 13px 19px;
+        }
+
+        .battery-symbol {
+          width: 36px;
+          height: 69px;
+        }
+
+        .battery-soc {
+          font-size: 31px;
+        }
+
+        .battery-detail-value {
+          font-size: 13px;
+        }
+
+        /* Dritte Reihe */
+
+        .information-panel {
+          height: 90px;
+          grid-template-columns: 44px 1fr;
+          padding: 10px 16px;
+        }
+
+        .information-panel ha-icon {
+          width: 30px;
+          height: 30px;
+        }
+
+        .information-title {
+          font-size: 11px;
+        }
+
+        .information-value {
+          margin-top: 2px;
+          font-size: 20px;
+        }
+
+        .information-subtitle {
+          margin-top: 2px;
+          font-size: 8px;
+        }
+      }
+
+
+      /*
+       * ==========================================================
+       * SEHR BREITE MONITORE
+       * ==========================================================
+       */
+
+      @media screen and (min-width: 1300px) {
+
+        .solar-dashboard {
+          max-width: 1700px;
+          margin: 0 auto;
+          gap: 12px;
+        }
+
+        .mppt-panel,
+        .live-panel {
+          height: 195px;
+        }
+
+        .pv-total-panel,
+        .battery-panel {
+          height: 135px;
+        }
+
+        .information-panel {
+          height: 95px;
+        }
+
+        .live-title {
+          font-size: 9px;
+        }
+
+        .live-current {
+          font-size: 21px;
+        }
+
+        .live-daily,
+        .live-double-value {
+          font-size: 9px;
+        }
+      }
+
+
+      /*
+       * ==========================================================
+       * V3 KOMPAKT – IPHONE
+       * Zeilen 2 bis 5 einheitlich 78 px
+       * ==========================================================
+       */
+
+      @media screen and (max-width: 699px) {
+
+        .solar-dashboard {
+          gap: 6px;
+        }
+
+        .mppt-panel {
+          height: 174px;
+          padding: 9px 8px 8px 8px;
+        }
+
+        .mppt-title {
+          font-size: 14px;
+        }
+
+        .mppt-gauge {
+          height: 84px;
+        }
+
+        .mppt-current-value {
+          bottom: 0;
+          font-size: 22px;
+        }
+
+        .mppt-current-value span {
+          font-size: 9px;
+        }
+
+        .mppt-daily-box {
+          width: 94%;
+          min-height: 34px;
+          padding: 3px 4px;
+          border-radius: 11px;
+        }
+
+        .mppt-daily-box ha-icon {
+          width: 18px;
+          height: 18px;
+        }
+
+        .mppt-daily-value {
+          font-size: 11px;
+        }
+
+        .small-label {
+          font-size: 6.5px;
+        }
+
+        /* Zeile 2 bis 5: identische Höhe */
+
+        .live-panel,
+        .pv-total-panel,
+        .battery-panel,
+        .information-panel {
+          height: 78px;
+        }
+
+        /* Zeile 2 – Livewerte */
+
+        .live-grid {
+          padding: 5px 2px;
+        }
+
+        .live-item {
+          padding: 0 2px;
+        }
+
+        .live-item ha-icon {
+          width: 17px;
+          height: 17px;
+          margin-bottom: 2px;
+        }
+
+        .live-title {
+          font-size: 5.3px;
+          line-height: 1;
+        }
+
+        .live-current {
+          margin-top: 3px;
+          font-size: 12px;
+        }
+
+        .live-current span {
+          font-size: 6px;
+        }
+
+        .live-daily,
+        .live-double-value {
+          margin-top: 3px;
+          font-size: 5.4px;
+          line-height: 1.15;
+        }
+
+        .live-double-value {
+          gap: 1px;
+        }
+
+        /* Zeile 3 – PV Total */
+
+        .pv-total-panel {
+          grid-template-columns: 34px 1fr auto;
+          padding: 6px 10px;
+        }
+
+        .pv-total-icon ha-icon {
+          width: 27px;
+          height: 27px;
+        }
+
+        .section-label {
+          font-size: 8px;
+        }
+
+        .pv-total-power {
+          margin-top: 1px;
+          font-size: 21px;
+        }
+
+        .pv-total-power span {
+          font-size: 9px;
+        }
+
+        .pv-total-status {
+          margin-top: 2px;
+          font-size: 6.5px;
+        }
+
+        .pv-total-daily {
+          padding-left: 5px;
+        }
+
+        .pv-total-daily-value {
+          margin-top: 2px;
+          font-size: 11px;
+        }
+
+        /* Zeile 4 – Batterie */
+
+        .battery-panel {
+          grid-template-columns: 34px 1fr auto;
+          padding: 6px 10px;
+        }
+
+        .battery-symbol {
+          width: 25px;
+          height: 48px;
+        }
+
+        .battery-tip {
+          top: -4px;
+          left: 7px;
+          width: 11px;
+          height: 5px;
+        }
+
+        .battery-body {
+          border-width: 2px;
+          border-radius: 6px;
+        }
+
+        .battery-fill {
+          right: 3px;
+          bottom: 3px;
+          left: 3px;
+        }
+
+        .battery-soc {
+          margin-top: 1px;
+          font-size: 23px;
+        }
+
+        .battery-soc span {
+          font-size: 11px;
+        }
+
+        .battery-status {
+          margin-top: 2px;
+          font-size: 7px;
+        }
+
+        .battery-details {
+          padding-left: 5px;
+        }
+
+        .battery-detail-value {
+          margin-top: 1px;
+          font-size: 10px;
+        }
+
+        .battery-detail-gap {
+          margin-top: 4px;
+        }
+
+        /* Zeile 5 – Vergütung und Restlaufzeit */
+
+        .information-panel {
+          grid-template-columns: 31px 1fr;
+          padding: 6px 8px;
+        }
+
+        .information-panel ha-icon {
+          width: 23px;
+          height: 23px;
+        }
+
+        .information-title {
+          font-size: 8px;
+        }
+
+        .information-value {
+          margin-top: 1px;
+          font-size: 16px;
+        }
+
+        .information-subtitle {
+          margin-top: 1px;
+          font-size: 6.5px;
+        }
+      }
+
+      /*
+       * ==========================================================
+       * V3 KOMPAKT – QUERFORMAT / DESKTOP
+       * ==========================================================
+       */
+
+      @media screen and (min-width: 700px) {
+
+        .mppt-panel,
+        .live-panel {
+          height: 166px;
+        }
+
+        .pv-total-panel,
+        .battery-panel,
+        .information-panel {
+          height: 96px;
+        }
+
+        .pv-total-panel,
+        .battery-panel {
+          padding-top: 9px;
+          padding-bottom: 9px;
+        }
+      }
+
+
+      /*
+       * ==========================================================
+       * V4 – PV TOTAL UND BATTERIE IN EINER ZEILE
+       * ==========================================================
+       */
+
+      @media screen and (max-width: 699px) {
+
+        .pv-total-panel,
+        .battery-panel {
+          height: 82px;
+          min-width: 0;
+          padding: 6px 7px;
+        }
+
+        .pv-total-panel {
+          grid-template-columns: 24px minmax(0, 1fr);
+          grid-template-areas:
+            "icon main"
+            "daily daily";
+          column-gap: 5px;
+          row-gap: 1px;
+        }
+
+        .pv-total-icon {
+          grid-area: icon;
+          align-self: center;
+        }
+
+        .pv-total-main {
+          grid-area: main;
+          min-width: 0;
+        }
+
+        .pv-total-daily {
+          grid-area: daily;
+          padding-left: 0;
+          text-align: left;
+        }
+
+        .pv-total-icon ha-icon {
+          width: 20px;
+          height: 20px;
+        }
+
+        .section-label {
+          font-size: 6.5px;
+        }
+
+        .pv-total-power {
+          margin-top: 0;
+          font-size: 16px;
+        }
+
+        .pv-total-power span {
+          font-size: 7px;
+        }
+
+        .pv-total-status {
+          display: none;
+        }
+
+        .pv-total-daily .small-label {
+          display: none;
+        }
+
+        .pv-total-daily-value {
+          margin-top: 0;
+          font-size: 8px;
+          opacity: 0.7;
+        }
+
+        .battery-panel {
+          grid-template-columns: 25px minmax(0, 1fr);
+          grid-template-areas:
+            "symbol main"
+            "details details";
+          column-gap: 5px;
+          row-gap: 1px;
+        }
+
+        .battery-symbol {
+          grid-area: symbol;
+          width: 20px;
+          height: 40px;
+          align-self: center;
+        }
+
+        .battery-main {
+          grid-area: main;
+          min-width: 0;
+        }
+
+        .battery-details {
+          grid-area: details;
+          display: grid;
+          grid-template-columns: auto auto auto auto;
+          align-items: center;
+          gap: 3px;
+          padding-left: 0;
+          text-align: left;
+        }
+
+        .battery-tip {
+          top: -3px;
+          left: 6px;
+          width: 8px;
+          height: 4px;
+        }
+
+        .battery-body {
+          border-width: 2px;
+          border-radius: 5px;
+        }
+
+        .battery-soc {
+          margin-top: 0;
+          font-size: 17px;
+        }
+
+        .battery-soc span {
+          font-size: 8px;
+        }
+
+        .battery-status {
+          margin-top: 1px;
+          font-size: 6px;
+        }
+
+        .battery-details .small-label {
+          font-size: 5.5px;
+          letter-spacing: 0;
+        }
+
+        .battery-detail-value {
+          margin-top: 0;
+          font-size: 7px;
+        }
+
+        .battery-detail-gap {
+          margin-top: 0;
+        }
+      }
+
+
+      /*
+       * ==========================================================
+       * V5 – QUERBALKEN PV TOTAL / BATTERIE
+       * ==========================================================
+       */
+
+      .v5-bar-panel {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 6px;
+        min-width: 0;
+        padding: 10px 12px;
+      }
+
+      .pv-total-panel.v5-bar-panel {
+        background:
+          radial-gradient(
+            circle at 20% 120%,
+            rgba(255,152,0,0.14),
+            transparent 48%
+          ),
+          radial-gradient(
+            circle at 85% 120%,
+            rgba(67,160,71,0.14),
+            transparent 48%
+          ),
+          linear-gradient(
+            145deg,
+            rgba(16,29,39,0.98),
+            rgba(5,12,18,0.98)
+          );
+      }
+
+      .battery-panel.v5-bar-panel {
+        background:
+          radial-gradient(
+            circle at 50% 120%,
+            rgba(118,255,122,0.10),
+            transparent 52%
+          ),
+          linear-gradient(
+            145deg,
+            rgba(16,29,39,0.98),
+            rgba(5,12,18,0.98)
+          );
+      }
+
+      .v5-bar-header {
+        display: flex;
+        min-width: 0;
+      }
+
+      .centered-header {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+
+      .v5-bar-title {
+        color: rgba(255,255,255,0.56);
+        font-size: 8px;
+        font-weight: 700;
+        letter-spacing: 0.8px;
+        line-height: 1;
+      }
+
+      .v5-bar-main {
+        margin-top: 2px;
+        color: white;
+        font-size: 18px;
+        font-weight: 700;
+        line-height: 1;
+        white-space: nowrap;
+      }
+
+      .v5-bar-main span {
+        font-size: 8px;
+        opacity: 0.7;
+      }
+
+      .v5-bar-percent {
+        font-size: 15px;
+        font-weight: 800;
+        line-height: 1;
+        white-space: nowrap;
+      }
+
+      .pv-percent {
+        color: #ffd740;
+      }
+
+      .pv-split-track,
+      .battery-horizontal-track {
+        position: relative;
+        display: flex;
+        width: 100%;
+        height: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.10);
+        border-radius: 999px;
+        background: rgba(255,255,255,0.07);
+        box-shadow:
+          inset 0 1px 3px rgba(0,0,0,0.45);
+      }
+
+      .pv-segment {
+        height: 100%;
+        transition: width 0.7s ease;
+      }
+
+      .mppt1-segment {
+        background:
+          linear-gradient(
+            90deg,
+            #ff9800,
+            #ffd740
+          );
+        box-shadow:
+          0 0 9px rgba(255,152,0,0.55);
+      }
+
+      .mppt2-segment {
+        background:
+          linear-gradient(
+            90deg,
+            #43a047,
+            #76ff7a
+          );
+        box-shadow:
+          0 0 9px rgba(118,255,122,0.45);
+      }
+
+      .battery-horizontal-fill {
+        height: 100%;
+        border-radius: 999px;
+        transition:
+          width 0.7s ease,
+          background 0.3s ease;
+      }
+
+      .v5-bar-footer {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        gap: 4px;
+        width: 100%;
+        min-width: 0;
+        color: rgba(255,255,255,0.58);
+        font-size: 6.5px;
+        font-weight: 600;
+        line-height: 1;
+        white-space: nowrap;
+      }
+
+      .v5-bar-footer > span:first-child {
+        justify-self: start;
+      }
+
+      .v5-footer-center {
+        justify-self: center;
+        text-align: center;
+      }
+
+      .v5-bar-footer > span:last-child {
+        justify-self: end;
+        text-align: right;
+      }
+
+      .mppt1-footer {
+        color: #ffb52e;
+      }
+
+      .mppt2-footer {
+        color: #76ff7a;
+      }
+
+      @media screen and (max-width: 699px) {
+
+        .pv-total-panel.v5-bar-panel,
+        .battery-panel.v5-bar-panel {
+          height: 82px;
+          padding: 8px 9px;
+          gap: 5px;
+        }
+
+        .v5-bar-title {
+          font-size: 7px;
+        }
+
+        .v5-bar-main {
+          font-size: 16px;
+        }
+
+        .v5-bar-percent {
+          font-size: 13px;
+        }
+
+        .pv-split-track,
+        .battery-horizontal-track {
+          height: 10px;
+        }
+
+        .v5-bar-footer {
+          font-size: 5.8px;
+        }
+      }
+
+      @media screen and (min-width: 700px) {
+
+        .pv-total-panel.v5-bar-panel,
+        .battery-panel.v5-bar-panel {
+          height: 96px;
+          padding: 12px 16px;
+        }
+
+        .v5-bar-title {
+          font-size: 9px;
+        }
+
+        .v5-bar-main {
+          font-size: 23px;
+        }
+
+        .v5-bar-percent {
+          font-size: 18px;
+        }
+
+        .pv-split-track,
+        .battery-horizontal-track {
+          height: 14px;
+        }
+
+        .v5-bar-footer {
+          font-size: 8px;
+        }
+      }
