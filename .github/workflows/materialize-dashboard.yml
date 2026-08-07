@@ -7,6 +7,7 @@ on:
       - 'tools/apply_theme_v7_1.py'
       - 'tools/apply_v72_theme.py'
       - 'tools/apply_i18n_v0_8.py'
+      - 'tools/apply_display_v0_8_1.py'
       - '.github/workflows/materialize-dashboard.yml'
 
 permissions:
@@ -39,6 +40,11 @@ jobs:
         run: |
           python tools/apply_i18n_v0_8.py
 
+      - name: Apply v0.8.1-alpha display/performance profiles
+        shell: bash
+        run: |
+          python tools/apply_display_v0_8_1.py
+
       - name: Commit generated dashboard
         shell: bash
         run: |
@@ -49,5 +55,5 @@ jobs:
             echo "dashboard.yaml is already up to date"
             exit 0
           fi
-          git commit -m "Generate dashboard.yaml v0.8.0-alpha"
+          git commit -m "Generate dashboard.yaml v0.8.1-alpha"
           git push
