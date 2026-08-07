@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # File: tools/build_dashboard.py
-# Timestamp: 2026-08-07 22:46 +0200
+# Timestamp: 2026-08-07 22:55 +0200
 
 """Build the generated Home Assistant dashboard.
 
-Build-Pipeline / Build-Pipeline:
+Build pipeline / Build-Pipeline:
 1. Decode the proven legacy V7 base.
 2. Apply the existing compatibility/theme/i18n/display migrations.
-3. Apply modular v0.8.2-alpha sources from src/.
+3. Replace migrated sections with modular sources from src/.
 4. Write the single user-facing dashboard.yaml.
 
 The legacy base is intentionally kept during the v0.8.x migration so the working
@@ -70,6 +70,11 @@ def source_setting(name: str, default: str) -> str:
     return match.group(1) if match else default
 
 
+def indent_source(text: str, spaces: int) -> str:
+    prefix = " " * spaces
+    return "\n".join(prefix + line if line else "" for line in text.strip().splitlines())
+
+
 def apply_modular_sources() -> None:
     text = DASHBOARD.read_text(encoding="utf-8")
 
@@ -104,8 +109,8 @@ def apply_modular_sources() -> None:
             count=1,
         )
 
-    # Replace I18N table from the modular source.
-    # I18N-Tabelle aus der modularen Quelle ersetzen.
+    # Replace I18N table from src/i18n.js.
+    # I18N-Tabelle aus src/i18n.js ersetzen.
     i18n = read_source_object(SRC / "i18n.js", "I18N_SOURCE")
     i18n_match = re.search(r"const I18N = \{.*?\n          \};", text, re.S)
     if not i18n_match:
@@ -113,31 +118,71 @@ def apply_modular_sources() -> None:
     indented_i18n = "const I18N = " + i18n.replace("\n", "\n          ") + ";"
     text = text[: i18n_match.start()] + indented_i18n + text[i18n_match.end() :]
 
+    # Replace display/performance resolver from src/layout.js.
+    # Display-/Performance-Erkennung aus src/layout.js ersetzen.
+    layout_source = (SRC / "layout.js").read_text(encoding="utf-8")
+    layout_body = re.sub(r"^/\*.*?\*/\s*", "", layout_source, count=1, flags=re.S).strip()
+    layout_match = re.search(
+        r"          const configuredDisplayMode =.*?"
+        r"          if \(performanceMode === 'auto'\) \{.*?\n          \}",
+        text,
+        re.S,
+    )
+    if not layout_match:
+        raise SystemExit("Display/performance resolver not found")
+    text = (
+        text[: layout_match.start()]
+        + indent_source(layout_body, 10)
+        + text[layout_match.end() :]
+    )
+
     # Unit-aware battery runtime / Restlaufzeit mit Einheit
-    old_runtime = """          const runtimeRaw =\n            runtimeSensor?.state || t.unknown;\n\n          const runtime =\n            runtimeRaw === 'unknown' ||\n            runtimeRaw === 'unavailable'\n              ? t.unknown\n              : runtimeRaw;"""
-    new_runtime = """          const runtime = formatRuntimeSensor(\n            runtimeSensor,\n            t.unknown\n          );"""
+    old_runtime = """          const runtimeRaw =
+            runtimeSensor?.state || t.unknown;
+
+          const runtime =
+            runtimeRaw === 'unknown' ||
+            runtimeRaw === 'unavailable'
+              ? t.unknown
+              : runtimeRaw;"""
+    new_runtime = """          const runtime = formatRuntimeSensor(
+            runtimeSensor,
+            t.unknown
+          );"""
     if old_runtime not in text:
         raise SystemExit("Battery runtime block not found")
     text = text.replace(old_runtime, new_runtime, 1)
 
-    # Inject modular runtime helper before the current-power section.
-    # Modularen Laufzeit-Helfer vor dem Leistungsbereich einfügen.
+    # Inject modular runtime helper from src/logic.js.
+    # Modularen Laufzeit-Helfer aus src/logic.js einfügen.
     logic_source = (SRC / "logic.js").read_text(encoding="utf-8")
-    helper_match = re.search(
-        r"function formatRuntimeSensor\(.*?\n\}", logic_source, re.S
-    )
+    helper_match = re.search(r"function formatRuntimeSensor\(.*?\n\}", logic_source, re.S)
     if not helper_match:
         raise SystemExit("formatRuntimeSensor helper not found in src/logic.js")
-    helper = helper_match.group(0)
-    helper = "\n".join("          " + line if line else "" for line in helper.splitlines())
+    helper = indent_source(helper_match.group(0), 10)
     marker = "          /*\n           * ========================================================\n           * AKTUELLE LEISTUNGEN"
     if "function formatRuntimeSensor(" not in text:
         if marker not in text:
             raise SystemExit("Current-power marker not found")
         text = text.replace(marker, helper + "\n\n" + marker, 1)
 
-    # Bilingual user-facing code comments. We intentionally focus on the configuration
-    # and main sections; old historical CSS comments are migrated gradually.
+    # Replace display/performance CSS with src/styles.css.
+    # Display-/Performance-CSS durch src/styles.css ersetzen.
+    styles = (SRC / "styles.css").read_text(encoding="utf-8").strip()
+    styles = indent_source(styles, 6)
+    css_match = re.search(
+        r"      /\*\n       \* ==========================================================\n"
+        r"       \* v0\.8\.1-alpha .*?DISPLAY / PERFORMANCE PROFILES.*?"
+        r"(?=      /\*\n       \* ==========================================================\n"
+        r"       \* GRUNDLAYOUT)",
+        text,
+        re.S,
+    )
+    if not css_match:
+        raise SystemExit("Legacy display/performance CSS block not found")
+    text = text[: css_match.start()] + styles + "\n\n" + text[css_match.end() :]
+
+    # Bilingual user-facing code comments. Historical CSS comments are migrated gradually.
     # Zweisprachige Nutzer-Kommentare. Historische CSS-Kommentare werden schrittweise migriert.
     replacements = {
         "BENUTZERKONFIGURATION – NUR DIESEN BLOCK ANPASSEN":
@@ -151,7 +196,6 @@ def apply_modular_sources() -> None:
         "AUSGABE": "OUTPUT / AUSGABE",
         "GRUNDLAYOUT": "BASE LAYOUT / GRUNDLAYOUT",
         "LIVE-ENERGIEFLUSS": "LIVE ENERGY FLOW / LIVE-ENERGIEFLUSS",
-        "BATTERIE": "BATTERY / BATTERIE",
         "VERGÜTUNG UND RESTLAUFZEIT": "REVENUE AND RUNTIME / VERGÜTUNG UND RESTLAUFZEIT",
     }
     for old, new in replacements.items():
@@ -172,6 +216,8 @@ def sanity_check() -> None:
         "performanceMode: 'auto'",
         "function formatRuntimeSensor(",
         "const I18N = {",
+        "solar-dashboard.perf-low",
+        "solar-dashboard.display-wall",
     ]
     missing = [item for item in required if item not in text]
     if missing:
