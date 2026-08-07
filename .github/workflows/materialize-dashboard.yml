@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'tools/dashboard_v7.yaml.gz.b64'
+      - 'tools/apply_theme_v7_1.py'
       - '.github/workflows/materialize-dashboard.yml'
 
 permissions:
@@ -16,10 +17,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Decode dashboard
+      - name: Decode V7 dashboard
         shell: bash
         run: |
           base64 -d tools/dashboard_v7.yaml.gz.b64 | gunzip > dashboard.yaml
+
+      - name: Apply V7.1 Home Assistant theme support
+        shell: bash
+        run: |
+          python tools/apply_theme_v7_1.py
 
       - name: Commit generated dashboard
         shell: bash
@@ -31,5 +37,5 @@ jobs:
             echo "dashboard.yaml is already up to date"
             exit 0
           fi
-          git commit -m "Generate dashboard.yaml from V7 source"
+          git commit -m "Generate dashboard.yaml V7.1 with light/dark support"
           git push
