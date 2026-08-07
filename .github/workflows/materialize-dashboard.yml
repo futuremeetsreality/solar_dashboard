@@ -1,0 +1,35 @@
+name: Build dashboard.yaml
+
+on:
+  push:
+    paths:
+      - 'tools/dashboard.yaml.gz.b64'
+      - '.github/workflows/materialize-dashboard.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Decode dashboard
+        shell: bash
+        run: |
+          base64 -d tools/dashboard.yaml.gz.b64 | gunzip > dashboard.yaml
+
+      - name: Commit generated dashboard
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add dashboard.yaml
+          if git diff --cached --quiet; then
+            echo "dashboard.yaml is already up to date"
+            exit 0
+          fi
+          git commit -m "Generate dashboard.yaml from V6 source"
+          git push
