@@ -3,6 +3,8 @@ name: Build dashboard.yaml
 on:
   push:
     paths:
+      - 'src/**'
+      - 'tools/build_dashboard.py'
       - 'tools/dashboard_v7.yaml.gz.b64'
       - 'tools/apply_theme_v7_1.py'
       - 'tools/apply_v72_theme.py'
@@ -20,30 +22,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Decode dashboard base
+      - name: Build modular dashboard
         shell: bash
         run: |
-          base64 -d tools/dashboard_v7.yaml.gz.b64 | gunzip > dashboard.yaml
-
-      - name: Apply Home Assistant theme support
-        shell: bash
-        run: |
-          python tools/apply_theme_v7_1.py
-
-      - name: Apply adaptive glow theme
-        shell: bash
-        run: |
-          python tools/apply_v72_theme.py
-
-      - name: Apply v0.8.0-alpha i18n
-        shell: bash
-        run: |
-          python tools/apply_i18n_v0_8.py
-
-      - name: Apply v0.8.1-alpha display/performance profiles
-        shell: bash
-        run: |
-          python tools/apply_display_v0_8_1.py
+          python tools/build_dashboard.py
 
       - name: Commit generated dashboard
         shell: bash
@@ -55,5 +37,5 @@ jobs:
             echo "dashboard.yaml is already up to date"
             exit 0
           fi
-          git commit -m "Generate dashboard.yaml v0.8.1-alpha"
+          git commit -m "Generate dashboard.yaml v0.8.2-alpha"
           git push
