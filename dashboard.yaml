@@ -1,4 +1,4 @@
-# solar_dashboard V7.2 - dashboard.yaml
+# solar_dashboard v0.8.0-alpha - dashboard.yaml
 # Aktualisiert: 2026-08-07 21:25
 # Voraussetzungen: custom:button-card, custom:power-flux-card, card-mod
 
@@ -154,6 +154,10 @@ cards:
            */
 
           const CONFIG = {
+
+            // UI language: 'auto', 'de' or 'en'.
+            // auto follows the Home Assistant language and falls back to English.
+            language: 'auto',
 
             /*
              * ======================================================
@@ -359,6 +363,80 @@ cards:
 
           /*
            * ========================================================
+           * INTERNATIONALIZATION / I18N
+           * ========================================================
+           */
+
+          const I18N = {
+            de: {
+              today: 'Heute',
+              todayUpper: 'HEUTE',
+              max: 'Max.',
+              maxUpper: 'MAX',
+              pv: 'PV',
+              pvTotal: 'PV TOTAL',
+              house: 'HAUS',
+              grid: 'NETZ',
+              import: 'Import',
+              export: 'Export',
+              battery: 'BATTERIE',
+              charge: 'Laden',
+              discharge: 'Entladen',
+              compensationToday: 'Vergütung heute',
+              feedInRevenue: 'Einspeiseerlös',
+              runtime: 'Restlaufzeit',
+              unknown: 'Unbekannt',
+              standby: 'STANDBY',
+              charging: 'LÄDT',
+              discharging: 'ENTLÄDT'
+            },
+            en: {
+              today: 'Today',
+              todayUpper: 'TODAY',
+              max: 'Max.',
+              maxUpper: 'MAX',
+              pv: 'PV',
+              pvTotal: 'PV TOTAL',
+              house: 'HOUSE',
+              grid: 'GRID',
+              import: 'Import',
+              export: 'Export',
+              battery: 'BATTERY',
+              charge: 'Charge',
+              discharge: 'Discharge',
+              compensationToday: 'Revenue today',
+              feedInRevenue: 'Feed-in revenue',
+              runtime: 'Runtime',
+              unknown: 'Unknown',
+              standby: 'STANDBY',
+              charging: 'CHARGING',
+              discharging: 'DISCHARGING'
+            }
+          };
+
+          const configuredLanguage =
+            String(CONFIG.language || 'auto').toLowerCase();
+
+          const detectedLanguage =
+            String(
+              hass?.language ||
+              window?.navigator?.language ||
+              'en'
+            ).toLowerCase();
+
+          const language =
+            configuredLanguage === 'de' ||
+            configuredLanguage === 'en'
+              ? configuredLanguage
+              : detectedLanguage.startsWith('de')
+                ? 'de'
+                : 'en';
+
+          const t = I18N[language] || I18N.en;
+          const locale = language === 'de' ? 'de-AT' : 'en-US';
+
+          /*
+           * ========================================================
            * HILFSFUNKTIONEN
            * ========================================================
            */
@@ -415,7 +493,7 @@ cards:
             minimumFractionDigits = 2,
             maximumFractionDigits = 2
           ) {
-            return value.toLocaleString('de-AT', {
+            return value.toLocaleString(locale, {
               minimumFractionDigits,
               maximumFractionDigits
             });
@@ -621,16 +699,16 @@ cards:
           const normalizedSoc =
             Math.min(Math.max(batterySoc, 0), 100);
 
-          let batteryStatus = 'STANDBY';
+          let batteryStatus = t.standby;
           let batteryColor = '#90a4ae';
           let batteryIcon = 'mdi:battery';
 
           if (batteryPower > 0.05) {
-            batteryStatus = 'LÄDT';
+            batteryStatus = t.charging;
             batteryColor = '#76ff7a';
             batteryIcon = 'mdi:battery-charging';
           } else if (batteryPower < -0.05) {
-            batteryStatus = 'ENTLÄDT';
+            batteryStatus = t.discharging;
             batteryColor = '#ffb43b';
             batteryIcon = 'mdi:battery-arrow-down';
           }
@@ -674,12 +752,12 @@ cards:
           );
 
           const runtimeRaw =
-            runtimeSensor?.state || 'Unbekannt';
+            runtimeSensor?.state || t.unknown;
 
           const runtime =
             runtimeRaw === 'unknown' ||
             runtimeRaw === 'unavailable'
-              ? 'Unbekannt'
+              ? t.unknown
               : runtimeRaw;
 
           /*
@@ -824,7 +902,7 @@ cards:
                     </div>
 
                     <div class="small-label">
-                      HEUTE · MAX ${formatNumber(
+                      ${t.todayUpper} · ${t.maxUpper} ${formatNumber(
                         tracker.maxKw,
                         2,
                         2
@@ -920,7 +998,7 @@ cards:
                     ></ha-icon>
 
                     <div class="live-title">
-                      PV
+                      ${t.pv}
                     </div>
 
                     <div class="live-current">
@@ -930,10 +1008,10 @@ cards:
 
                     <div class="live-double-value">
                       <span>
-                        Heute ${formatEnergy(solarToday)} kWh
+                        ${t.today} ${formatEnergy(solarToday)} kWh
                       </span>
                       <span>
-                        Max. ${formatNumber(pvMaximum, 2, 2)} kW
+                        ${t.max} ${formatNumber(pvMaximum, 2, 2)} kW
                       </span>
                     </div>
 
@@ -948,7 +1026,7 @@ cards:
                     ></ha-icon>
 
                     <div class="live-title">
-                      HAUS
+                      ${t.house}
                     </div>
 
                     <div class="live-current">
@@ -958,7 +1036,7 @@ cards:
 
                     <div class="live-double-value">
                       <span>
-                        Heute ${formatEnergy(houseToday)} kWh
+                        ${t.today} ${formatEnergy(houseToday)} kWh
                       </span>
                       <span>
                         Aktuell ${formatPower(housePower)} kW
@@ -976,7 +1054,7 @@ cards:
                     ></ha-icon>
 
                     <div class="live-title">
-                      NETZ
+                      ${t.grid}
                     </div>
 
                     <div class="live-current">
@@ -989,13 +1067,13 @@ cards:
                     <div class="live-double-value">
 
                       <span>
-                        Import
+                        ${t.import}
                         ${formatEnergy(importToday)}
                         kWh
                       </span>
 
                       <span>
-                        Export
+                        ${t.export}
                         ${formatEnergy(exportToday)}
                         kWh
                       </span>
@@ -1013,7 +1091,7 @@ cards:
                     ></ha-icon>
 
                     <div class="live-title">
-                      BATTERIE
+                      ${t.battery}
                     </div>
 
                     <div class="live-current">
@@ -1026,13 +1104,13 @@ cards:
                     <div class="live-double-value">
 
                       <span>
-                        Laden
+                        ${t.charge}
                         ${formatEnergy(batteryInputToday)}
                         kWh
                       </span>
 
                       <span>
-                        Entladen
+                        ${t.discharge}
                         ${formatEnergy(batteryOutputToday)}
                         kWh
                       </span>
@@ -1054,7 +1132,7 @@ cards:
                 <div class="v5-bar-header centered-header">
 
                   <div class="v5-bar-title">
-                    PV TOTAL
+                    ${t.pvTotal}
                   </div>
 
                   <div class="v5-bar-main">
@@ -1081,7 +1159,7 @@ cards:
                       0
                     )} %
                     ·
-                    ${formatEnergy(solarToday)} kWh heute
+                    ${formatEnergy(solarToday)} kWh ${t.today.toLowerCase()}
                   </div>
 
                 </div>
@@ -1161,7 +1239,7 @@ cards:
                 <div class="information-content">
 
                   <div class="information-title">
-                    Vergütung heute
+                    ${t.compensationToday}
                   </div>
 
                   <div class="information-value">
@@ -1173,7 +1251,7 @@ cards:
                   </div>
 
                   <div class="information-subtitle">
-                    Einspeiseerlös
+                    ${t.feedInRevenue}
                   </div>
 
                 </div>
@@ -1193,7 +1271,7 @@ cards:
                 <div class="information-content">
 
                   <div class="information-title">
-                    Restlaufzeit
+                    ${t.runtime}
                   </div>
 
                   <div class="information-value">
@@ -1201,7 +1279,7 @@ cards:
                   </div>
 
                   <div class="information-subtitle">
-                    Batterie
+                    ${t.battery}
                   </div>
 
                 </div>
