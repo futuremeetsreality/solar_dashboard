@@ -4,7 +4,7 @@
 
 A responsive solar and battery dashboard for Home Assistant with Power Flux visualization, dynamic MPPT gauges, daily energy values, grid flow, battery status, feed-in revenue, adaptive light/dark styling, bilingual UI support, and dedicated wall-display profiles.
 
-Current version: **v0.8.1-alpha**
+Current version: **v0.8.2-alpha**
 
 > Alpha means the dashboard is already usable, but configuration, compatibility and UI behavior are still being tested across different Home Assistant installations.
 
@@ -21,6 +21,7 @@ Current version: **v0.8.1-alpha**
 - Manufacturer-independent sensor mapping
 - Dedicated `wall` layout for permanently mounted tablets
 - Automatic low-performance compatibility mode for older Safari/iPadOS devices
+- Modular source architecture with generated `dashboard.yaml`
 
 ## Requirements
 
@@ -64,30 +65,16 @@ Number formatting follows the selected language as well.
 
 ## Display and performance profiles
 
-v0.8.1-alpha adds two independent options:
-
 ```js
 displayMode: 'auto',
 performanceMode: 'auto',
 ```
 
-`displayMode` supports:
+`displayMode` supports `auto`, `desktop`, `tablet` and `wall`.
 
-- `auto` — normal responsive behavior; tablet-like touch devices are detected as tablets
-- `desktop` — desktop profile
-- `tablet` — tablet profile
-- `wall` — larger values, thicker bars and optimized spacing for permanently mounted displays
+`performanceMode` supports `auto`, `high`, `balanced` and `low`.
 
-`performanceMode` supports:
-
-- `auto` — checks browser capabilities automatically
-- `high` — full visual effects
-- `balanced` — reduced GPU-heavy effects
-- `low` — compatibility profile with simpler rendering, no expensive SVG filters and no animations
-
-Older Safari/iPadOS versions that do not support `color-mix()` automatically fall back to `low` mode. This is intended for older wall tablets such as an iPad Air 2 on iPadOS 15.
-
-For a permanently mounted older iPad, start with:
+Older Safari/iPadOS versions that do not support `color-mix()` automatically fall back to `low` mode. For an older permanently mounted iPad, start with:
 
 ```js
 displayMode: 'wall',
@@ -128,6 +115,33 @@ Use one object for one tracker, add more objects for additional trackers. The gr
 - calculated PV maximum: 15.47 kW
 - battery capacity: 12.50 kWh
 
+## Modular source architecture
+
+Starting with **v0.8.2-alpha**, `dashboard.yaml` is generated from smaller source modules:
+
+```text
+src/
+├── config.js
+├── i18n.js
+├── layout.js
+├── logic.js
+├── styles.css
+└── README.md
+
+tools/
+└── build_dashboard.py
+```
+
+Local build:
+
+```bash
+python tools/build_dashboard.py
+```
+
+GitHub Actions automatically runs the same builder whenever source files or build tooling change. Normal Home Assistant users still only need `dashboard.yaml`.
+
+The proven legacy V7 base remains temporarily in the v0.8.x build pipeline while sections are migrated into `src/` step by step. This avoids a risky rewrite of a working dashboard.
+
 ## Sensor mapping
 
 The included SolaX entity IDs are only examples. Other inverter, battery or meter systems can be used as long as the mapped sensors provide the expected measurement.
@@ -136,6 +150,7 @@ See:
 
 - [Entity reference](docs/ENTITY_REFERENCE.md)
 - [Home Assistant testing guide](docs/TESTING.md)
+- [Source architecture](src/README.md)
 - [Changelog](CHANGELOG.md)
 
 ## Versioning
