@@ -1,8 +1,21 @@
 # Solar Dashboard for Home Assistant
 
-Ein responsives PV-/Batterie-Dashboard für Home Assistant mit Power-Flux-Ansicht, MPPT-Gauges, Tageswerten, Netzfluss, Batterie und Einspeisevergütung.
+Ein responsives PV-/Batterie-Dashboard für Home Assistant mit Power-Flux-Ansicht, dynamischen MPPT-Gauges, Tageswerten, Netzfluss, Batterie und Einspeisevergütung.
 
-Aktueller Stand: **V6**
+Aktueller Stand: **V7**
+
+## Was ist neu in V7?
+
+V7 unterstützt eine **beliebige Anzahl an MPPT-/PV-Trackern**. Die Tracker werden nur noch in einer Liste konfiguriert. Daraus erzeugt das Dashboard automatisch:
+
+- eine MPPT-Karte pro Tracker,
+- das responsive MPPT-Raster,
+- den individuellen Maximalwert jedes Gauges,
+- die Farben jedes Trackers,
+- den geteilten PV-Total-Balken,
+- die maximale PV-Gesamtleistung als Summe aller `maxKw`-Werte.
+
+Damit funktioniert das Dashboard z. B. mit 1, 2, 3 oder mehr Trackern, ohne den eigentlichen Dashboard-Code umzubauen.
 
 ## Voraussetzungen
 
@@ -18,109 +31,121 @@ Danach Home Assistant bzw. den Browser neu laden.
 
 Die Datei [`dashboard.yaml`](dashboard.yaml) ist als **eine komplette Lovelace-Karte** aufgebaut.
 
-Zum Testen:
+In Home Assistant:
 
-1. Home Assistant öffnen.
-2. Gewünschtes Dashboard öffnen.
-3. **Dashboard bearbeiten**.
-4. **Karte hinzufügen**.
-5. **Manuell** auswählen.
-6. Den kompletten Inhalt von `dashboard.yaml` einfügen.
-7. Speichern.
+1. Dashboard bearbeiten.
+2. **Karte hinzufügen**.
+3. **Manuell** auswählen.
+4. Den vollständigen Inhalt von `dashboard.yaml` einfügen.
+5. Speichern.
 
-> Wichtig: `dashboard.yaml` nicht direkt in den Rohkonfigurationseditor des gesamten Dashboards einfügen. Die Datei beginnt mit `type: vertical-stack` und ist daher eine Kartenkonfiguration.
+Es müssen nicht mehrere Dateien oder Karten eingebunden werden.
 
-## Konfiguration
+## Benutzerkonfiguration
 
-Im `custom:button-card`-Teil von `dashboard.yaml` gibt es direkt am Anfang des JavaScript-Templates den Abschnitt:
+Im `custom:button-card`-Teil befindet sich der Block:
 
-```text
-BENUTZERKONFIGURATION – NUR DIESEN BLOCK ANPASSEN
+```js
+const CONFIG = {
+  trackers: [ ... ],
+  entities: { ... },
+  limits: { ... }
+};
 ```
 
-Dort sind alle benötigten Sensoren mit Beschreibung, erwarteter Messgröße und Einheit dokumentiert.
+### MPPT-/Tracker konfigurieren
 
-Zusätzlich müssen die Sensoren im Abschnitt `Power Flux Card` angepasst werden. Diese Custom Card kann die JavaScript-Konfiguration der Button Card technisch nicht mitbenutzen, daher gibt es dort einen zweiten kleinen Entity-Block.
+Jeder Tracker ist ein Objekt in `CONFIG.trackers`:
 
-## Anlagenwerte
+```js
+{
+  name: 'MPPT 1',
+  power: 'sensor.mein_mppt_1_power',
+  energyToday: 'sensor.mein_mppt_1_energy_today',
+  maxKw: 9.10,
+  colorStart: '#ff9800',
+  colorEnd: '#ffd740'
+}
+```
 
-Die Maximalwerte werden zentral unter `CONFIG.limits` festgelegt:
+Bedeutung:
 
-- `pvMaxKw`: installierte PV-Gesamtleistung
-- `mppt1MaxKw`: maximale/zugeordnete Leistung an MPPT 1
-- `mppt2MaxKw`: maximale/zugeordnete Leistung an MPPT 2
-- `batteryCapacityKwh`: Batteriekapazität
+- `name`: Anzeigename des Trackers.
+- `power`: aktuelle Leistung des Trackers in W oder kW.
+- `energyToday`: seit Mitternacht erzeugte Energie in Wh oder kWh.
+- `maxKw`: maximale/zugeordnete Generatorleistung dieses Trackers in kW.
+- `colorStart` / `colorEnd`: Farbe für Gauge und PV-Segment.
 
-Beispielkonfiguration dieser Anlage:
+### Nur ein MPPT
 
-```javascript
+Lass nur einen Tracker in der Liste stehen.
+
+### Drei MPPTs
+
+Füge einfach einen dritten Tracker hinzu:
+
+```js
+{
+  name: 'MPPT 3',
+  power: 'sensor.mein_mppt_3_power',
+  energyToday: 'sensor.mein_mppt_3_energy_today',
+  maxKw: 5.00,
+  colorStart: '#2196f3',
+  colorEnd: '#00e5ff'
+}
+```
+
+Das Layout und der PV-Balken passen sich automatisch an.
+
+## PV-Gesamtmaximum
+
+In V7 muss `pvMaxKw` nicht mehr separat gepflegt werden. Das Dashboard berechnet automatisch:
+
+```text
+PV max = Summe aller Tracker maxKw
+```
+
+Beispiel der mitgelieferten SolaX-Konfiguration:
+
+```text
+MPPT 1 = 9,10 kW
+MPPT 2 = 6,37 kW
+PV max  = 15,47 kW
+```
+
+## Batterie
+
+Die Batteriekapazität bleibt zentral konfigurierbar:
+
+```js
 limits: {
-  pvMaxKw: 15.47,
-  mppt1MaxKw: 9.10,
-  mppt2MaxKw: 6.37,
   batteryCapacityKwh: 12.50
 }
 ```
 
 ## Sensoren
 
-Eine ausführliche Übersicht findest du in [`docs/ENTITY_REFERENCE.md`](docs/ENTITY_REFERENCE.md).
+Eine ausführliche Beschreibung jedes benötigten Messwerts findest du unter:
 
-Das Dashboard akzeptiert bei Leistung automatisch **W oder kW** und bei Energie **Wh oder kWh**.
+[`docs/ENTITY_REFERENCE.md`](docs/ENTITY_REFERENCE.md)
 
-## Hersteller
+Dort ist beschrieben, **was** ein Sensor liefern muss. Die konkrete Integration bzw. der Hersteller ist egal.
 
-Das Dashboard ist nicht auf SolaX festgelegt. Die Sensoren dürfen unter anderem aus folgenden Integrationen stammen:
+## Power Flux Card
 
-- SolaX
-- Fronius
-- SMA
-- Huawei
-- Victron
-- GoodWe
-- Kostal
-- SolarEdge
-- Shelly
-- ESPHome
-- beliebigen Template-Sensoren
+Die Power Flux Card ist eine eigenständige Custom Card und besitzt deshalb ihren eigenen `entities:`-Block am Anfang von `dashboard.yaml`.
 
-Entscheidend ist nur, dass die jeweilige Entity den dokumentierten Messwert liefert.
+Diese Entity-IDs müssen bei einer Übernahme auf ein anderes System zusätzlich angepasst werden. Die Tracker-Liste betrifft den selbst entwickelten Dashboard-Bereich.
 
-## Optionale Sensoren
+## Testen
 
-`houseEnergyToday`, `compensationToday` und `batteryRuntime` sind konzeptionell optional.
+Siehe [`docs/TESTING.md`](docs/TESTING.md).
 
-Wenn `houseEnergyToday` leer gelassen wird, berechnet das Dashboard den Tages-Hausverbrauch aus:
+## Versionen
 
-```text
-PV-Produktion
-+ Netzimport
-+ Batterieentladung
-- Netzeinspeisung
-- Batterieladung
-```
+- V6: zentrale Entity-Konfiguration und dokumentierte Sensoren.
+- V7: dynamische Anzahl von MPPT-/PV-Trackern.
 
-## Aufbau
+## Lizenz / Nutzung
 
-Auf dem Smartphone:
-
-1. Power Flux
-2. MPPT 1 / MPPT 2
-3. PV Total / Batterie
-4. PV / Haus / Netz / Batterie Livewerte
-5. Vergütung / Batterierestlaufzeit
-
-Das Layout passt sich an größere Displays und Querformat an.
-
-## Hinweis zur Batterieleistung
-
-Die aktuelle Logik erwartet:
-
-- positiver Wert = Batterie lädt
-- negativer Wert = Batterie entlädt
-
-Falls deine Integration das Vorzeichen umgekehrt liefert, muss diese Logik angepasst werden.
-
-## Version
-
-V6 basiert auf dem zuvor getesteten V5.2-Layout und zentralisiert die Entity-Zuordnung im Haupt-Dashboard.
+Das Projekt ist als Home-Assistant-Dashboard-Vorlage gedacht und darf an die eigene Anlage angepasst werden.
