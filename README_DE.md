@@ -4,7 +4,7 @@
 
 Ein responsives PV- und Batterie-Dashboard für Home Assistant mit Power-Flux-Ansicht, dynamischen MPPT-Gauges, Tageswerten, Netzfluss, Batterie, Einspeisevergütung, adaptivem Hell-/Dunkelmodus, zweisprachiger Oberfläche und eigenem Wall-Display-Profil.
 
-Aktuelle Version: **v0.8.1-alpha**
+Aktuelle Version: **v0.8.2-alpha**
 
 > Alpha bedeutet: Das Dashboard ist bereits nutzbar, wird aber noch auf unterschiedlichen Home-Assistant-Systemen hinsichtlich Konfiguration, Kompatibilität und Darstellung getestet.
 
@@ -21,6 +21,7 @@ Aktuelle Version: **v0.8.1-alpha**
 - herstellerunabhängige Sensor-Zuordnung
 - eigener `wall`-Modus für dauerhaft montierte Tablets
 - automatischer Kompatibilitätsmodus für ältere Safari-/iPadOS-Geräte
+- modulare Quellcode-Struktur mit automatisch erzeugter `dashboard.yaml`
 
 ## Voraussetzungen
 
@@ -48,46 +49,24 @@ Nicht direkt in den Rohkonfigurationseditor des gesamten Dashboards einfügen.
 
 ## Sprache
 
-Im Konfigurationsbereich der `custom:button-card` steht:
-
 ```js
 language: 'auto',
 ```
 
-Unterstützte Werte:
-
-- `auto` — übernimmt die Home-Assistant-Sprache; Deutsch wird als `de` erkannt, alle anderen Sprachen fallen derzeit auf Englisch zurück
-- `de` — Deutsch erzwingen
-- `en` — Englisch erzwingen
-
-Auch die Zahlenformatierung passt sich an die gewählte Sprache an.
+Unterstützt: `auto`, `de`, `en`. Auch die Zahlenformatierung folgt der ausgewählten Sprache.
 
 ## Display- und Performance-Profile
-
-v0.8.1-alpha ergänzt zwei voneinander unabhängige Einstellungen:
 
 ```js
 displayMode: 'auto',
 performanceMode: 'auto',
 ```
 
-`displayMode` unterstützt:
+`displayMode`: `auto`, `desktop`, `tablet`, `wall`
 
-- `auto` — normales responsives Verhalten; Touch-Tablets werden automatisch erkannt
-- `desktop` — Desktop-Profil
-- `tablet` — Tablet-Profil
-- `wall` — größere Werte, dickere Balken und optimierte Abstände für fest montierte Anzeigen
+`performanceMode`: `auto`, `high`, `balanced`, `low`
 
-`performanceMode` unterstützt:
-
-- `auto` — prüft die Browser-Fähigkeiten automatisch
-- `high` — vollständige optische Effekte
-- `balanced` — reduzierte GPU-intensive Effekte
-- `low` — Kompatibilitätsprofil mit vereinfachter Darstellung, ohne aufwendige SVG-Filter und ohne Animationen
-
-Ältere Safari-/iPadOS-Versionen ohne Unterstützung für `color-mix()` fallen automatisch auf `low` zurück. Das ist insbesondere für ältere Wandtablets wie ein iPad Air 2 mit iPadOS 15 gedacht.
-
-Für ein älteres, dauerhaft montiertes iPad empfiehlt sich zunächst:
+Ältere Safari-/iPadOS-Versionen ohne `color-mix()` fallen automatisch auf `low` zurück. Für ein älteres, dauerhaft montiertes iPad empfiehlt sich zunächst:
 
 ```js
 displayMode: 'wall',
@@ -96,30 +75,7 @@ performanceMode: 'auto',
 
 ## MPPT-/Tracker-Konfiguration
 
-Die Tracker werden in `CONFIG.trackers` definiert:
-
-```js
-trackers: [
-  {
-    name: 'MPPT 1',
-    power: 'sensor.mein_mppt_1_power',
-    energyToday: 'sensor.mein_mppt_1_energy_today',
-    maxKw: 9.10,
-    colorStart: '#ff9800',
-    colorEnd: '#ffd740'
-  },
-  {
-    name: 'MPPT 2',
-    power: 'sensor.mein_mppt_2_power',
-    energyToday: 'sensor.mein_mppt_2_energy_today',
-    maxKw: 6.37,
-    colorStart: '#43a047',
-    colorEnd: '#76ff7a'
-  }
-]
-```
-
-Für einen Tracker bleibt nur ein Objekt stehen. Für weitere Tracker werden zusätzliche Objekte ergänzt. Raster, Gauges und PV-Total-Balken passen sich automatisch an.
+Die Tracker werden in `CONFIG.trackers` definiert. Für einen Tracker bleibt nur ein Objekt stehen. Für weitere Tracker werden zusätzliche Objekte ergänzt. Raster, Gauges und PV-Total-Balken passen sich automatisch an.
 
 ## Beispielkonfiguration im Repository
 
@@ -127,6 +83,33 @@ Für einen Tracker bleibt nur ein Objekt stehen. Für weitere Tracker werden zus
 - MPPT 2: 6,37 kW
 - automatisch berechnete PV-Gesamtleistung: 15,47 kW
 - Batterie: 12,50 kWh
+
+## Modulare Quellcode-Architektur
+
+Ab **v0.8.2-alpha** ist `dashboard.yaml` eine generierte Datei. Neue Entwicklung wird aufgeteilt in:
+
+```text
+src/
+├── config.js
+├── i18n.js
+├── layout.js
+├── logic.js
+├── styles.css
+└── README.md
+
+tools/
+└── build_dashboard.py
+```
+
+Lokaler Build:
+
+```bash
+python tools/build_dashboard.py
+```
+
+GitHub Actions führt denselben Builder automatisch aus, sobald sich Quellcode oder Build-Werkzeuge ändern. Normale Home-Assistant-Nutzer benötigen weiterhin nur `dashboard.yaml`.
+
+Die bewährte V7-Basis bleibt während der v0.8.x-Migration vorübergehend im Build-Prozess. Einzelne Bereiche werden schrittweise nach `src/` verschoben, ohne das funktionierende Dashboard komplett neu zu schreiben.
 
 ## Sensor-Zuordnung
 
@@ -136,11 +119,10 @@ Siehe:
 
 - [Entity-Referenz](docs/ENTITY_REFERENCE_DE.md)
 - [Home-Assistant-Testanleitung](docs/TESTING_DE.md)
+- [Quellcode-Architektur](src/README.md)
 - [Changelog](CHANGELOG.md)
 
 ## Versionierung
-
-Das Projekt verwendet semantische Pre-Release-Versionierung:
 
 - `v0.8.x-alpha` — aktive Funktionsentwicklung und Kompatibilitätstests
 - `v0.9.x-beta` — weitgehend vollständiger Funktionsumfang, breite Tests
