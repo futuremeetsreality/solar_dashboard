@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.8.2-alpha - 2026-08-07
+
+- Introduced a modular source architecture under `src/`.
+- Added `src/config.js`, `src/i18n.js`, `src/layout.js`, `src/logic.js` and `src/styles.css`.
+- Added `tools/build_dashboard.py` as the single dashboard builder.
+- GitHub Actions now runs the modular builder and regenerates `dashboard.yaml` automatically.
+- `dashboard.yaml` is now explicitly marked as a generated file.
+- Kept the proven legacy V7 base temporarily during the v0.8.x migration to avoid a risky full rewrite.
+- Migrated language data, display/performance resolver, runtime helper and compatibility styles into modular source files.
+- Added unit-aware battery runtime display: Home Assistant sensor units are used when available; numeric runtime falls back to hours (`h`).
+- Started converting generated YAML comments to bilingual English/German documentation.
+- Added bilingual source-architecture documentation in `src/README.md`.
+
 ## v0.8.1-alpha - 2026-08-07
 
 - Added `displayMode`: `auto`, `desktop`, `tablet`, `wall`.
