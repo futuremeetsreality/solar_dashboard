@@ -1,4 +1,6 @@
-# solar_dashboard v0.8.1-alpha - dashboard.yaml
+# solar_dashboard v0.8.2-alpha - dashboard.yaml
+# GENERATED FILE - edit src/ and tools/build_dashboard.py instead.
+# GENERIERTE DATEI - Änderungen bitte in src/ und tools/build_dashboard.py vornehmen.
 # Aktualisiert: 2026-08-07 21:25
 # Voraussetzungen: custom:button-card, custom:power-flux-card, card-mod
 
@@ -141,7 +143,7 @@ cards:
 
           /*
            * ========================================================
-           * BENUTZERKONFIGURATION – NUR DIESEN BLOCK ANPASSEN
+           * USER CONFIGURATION / BENUTZERKONFIGURATION – ONLY EDIT THIS BLOCK / NUR DIESEN BLOCK ANPASSEN
            * ========================================================
            *
            * Alle Entity-IDs dürfen aus beliebigen Integrationen stammen.
@@ -394,6 +396,7 @@ cards:
               compensationToday: 'Vergütung heute',
               feedInRevenue: 'Einspeiseerlös',
               runtime: 'Restlaufzeit',
+              remaining: 'verbleibend',
               unknown: 'Unbekannt',
               standby: 'STANDBY',
               charging: 'LÄDT',
@@ -417,6 +420,7 @@ cards:
               compensationToday: 'Revenue today',
               feedInRevenue: 'Feed-in revenue',
               runtime: 'Runtime',
+              remaining: 'remaining',
               unknown: 'Unknown',
               standby: 'STANDBY',
               charging: 'CHARGING',
@@ -457,26 +461,17 @@ cards:
           const configuredPerformanceMode =
             String(CONFIG.performanceMode || 'auto').toLowerCase();
 
-          const viewportWidth =
-            Number(window?.innerWidth || 0);
-
-          const touchPoints =
-            Number(window?.navigator?.maxTouchPoints || 0);
-
-          const userAgent =
-            String(window?.navigator?.userAgent || '');
+          const viewportWidth = Number(window?.innerWidth || 0);
+          const touchPoints = Number(window?.navigator?.maxTouchPoints || 0);
+          const userAgent = String(window?.navigator?.userAgent || '');
 
           const isTouchDevice = touchPoints > 0;
-          const isTabletLike =
-            isTouchDevice && viewportWidth >= 700;
+          const isTabletLike = isTouchDevice && viewportWidth >= 700;
 
-          const validDisplayModes =
-            ['auto', 'desktop', 'tablet', 'wall'];
-
-          let displayMode =
-            validDisplayModes.includes(configuredDisplayMode)
-              ? configuredDisplayMode
-              : 'auto';
+          const validDisplayModes = ['auto', 'desktop', 'tablet', 'wall'];
+          let displayMode = validDisplayModes.includes(configuredDisplayMode)
+            ? configuredDisplayMode
+            : 'auto';
 
           if (displayMode === 'auto') {
             if (isTabletLike) {
@@ -488,33 +483,25 @@ cards:
             }
           }
 
-          const iosVersionMatch =
-            userAgent.match(/OS (\d+)[_.]/i);
-
-          const iosMajorVersion =
-            iosVersionMatch
-              ? Number.parseInt(iosVersionMatch[1], 10)
-              : null;
+          const iosVersionMatch = userAgent.match(/OS (\d+)[_.]/i);
+          const iosMajorVersion = iosVersionMatch
+            ? Number.parseInt(iosVersionMatch[1], 10)
+            : null;
 
           const isOldIOS =
-            Number.isFinite(iosMajorVersion) &&
-            iosMajorVersion <= 15;
+            Number.isFinite(iosMajorVersion) && iosMajorVersion <= 15;
 
-          const supportsColorMix =
-            Boolean(
-              window?.CSS?.supports?.(
-                'color',
-                'color-mix(in srgb, red 50%, blue)'
-              )
-            );
+          const supportsColorMix = Boolean(
+            window?.CSS?.supports?.(
+              'color',
+              'color-mix(in srgb, red 50%, blue)'
+            )
+          );
 
-          const validPerformanceModes =
-            ['auto', 'high', 'balanced', 'low'];
-
-          let performanceMode =
-            validPerformanceModes.includes(configuredPerformanceMode)
-              ? configuredPerformanceMode
-              : 'auto';
+          const validPerformanceModes = ['auto', 'high', 'balanced', 'low'];
+          let performanceMode = validPerformanceModes.includes(configuredPerformanceMode)
+            ? configuredPerformanceMode
+            : 'auto';
 
           if (performanceMode === 'auto') {
             if (isOldIOS || !supportsColorMix) {
@@ -528,7 +515,7 @@ cards:
 
           /*
            * ========================================================
-           * HILFSFUNKTIONEN
+           * HELPER FUNCTIONS / HILFSFUNKTIONEN
            * ========================================================
            */
 
@@ -697,9 +684,35 @@ cards:
             `;
           }
 
+          function formatRuntimeSensor(runtimeSensor, unknownLabel) {
+            const raw = runtimeSensor?.state;
+
+            if (!raw || raw === 'unknown' || raw === 'unavailable') {
+              return unknownLabel;
+            }
+
+            const unit = String(
+              runtimeSensor?.attributes?.unit_of_measurement || ''
+            ).trim();
+
+            const numeric = Number.parseFloat(raw);
+
+            if (Number.isFinite(numeric)) {
+              // If Home Assistant exposes a unit, keep it. Otherwise runtime defaults to hours.
+              // Wenn Home Assistant eine Einheit liefert, wird sie verwendet. Sonst gilt Stunde als Standard.
+              const runtimeUnit = unit || 'h';
+              return `${numeric.toLocaleString(locale, {
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 1
+              })} ${runtimeUnit}`;
+            }
+
+            return unit ? `${raw} ${unit}` : raw;
+          }
+
           /*
            * ========================================================
-           * AKTUELLE LEISTUNGEN
+           * CURRENT POWER / AKTUELLE LEISTUNGEN
            * ========================================================
            */
 
@@ -725,7 +738,7 @@ cards:
 
           /*
            * ========================================================
-           * TAGESENERGIEN
+           * DAILY ENERGY / TAGESENERGIEN
            * ========================================================
            */
 
@@ -775,7 +788,7 @@ cards:
 
           /*
            * ========================================================
-           * BATTERIEWERTE
+           * BATTERY VALUES / BATTERIEWERTE
            * ========================================================
            */
 
@@ -810,7 +823,7 @@ cards:
 
           /*
            * ========================================================
-           * NETZSTATUS
+           * GRID STATUS / NETZSTATUS
            * ========================================================
            */
 
@@ -830,7 +843,7 @@ cards:
 
           /*
            * ========================================================
-           * WEITERE WERTE
+           * ADDITIONAL VALUES / WEITERE WERTE
            * ========================================================
            */
 
@@ -842,14 +855,10 @@ cards:
             CONFIG.entities.batteryRuntime
           );
 
-          const runtimeRaw =
-            runtimeSensor?.state || t.unknown;
-
-          const runtime =
-            runtimeRaw === 'unknown' ||
-            runtimeRaw === 'unavailable'
-              ? t.unknown
-              : runtimeRaw;
+          const runtime = formatRuntimeSensor(
+            runtimeSensor,
+            t.unknown
+          );
 
           /*
            * ========================================================
@@ -1054,7 +1063,7 @@ cards:
 
           /*
            * ========================================================
-           * AUSGABE
+           * OUTPUT / AUSGABE
            * ========================================================
            */
 
@@ -1073,7 +1082,7 @@ cards:
               </div>
 
               <!-- =============================================== -->
-              <!-- LIVE-ENERGIEFLUSS -->
+              <!-- LIVE ENERGY FLOW / LIVE-ENERGIEFLUSS -->
               <!-- =============================================== -->
 
               <div class="panel live-panel">
@@ -1397,31 +1406,12 @@ cards:
           - overflow: visible
     extra_styles: |
       /*
-       * ==========================================================
-       * v0.8.1-alpha – DISPLAY / PERFORMANCE PROFILES
-       * ==========================================================
-       *
-       * displayMode:
-       *   auto | desktop | tablet | wall
-       *
-       * performanceMode:
-       *   auto | high | balanced | low
-       *
-       * The low profile intentionally avoids color-mix dependent
-       * surfaces and expensive filters. This keeps older Safari /
-       * iPadOS devices usable as permanent Home Assistant displays.
+       * v0.8.2-alpha - display/performance compatibility layer
+       * v0.8.2-alpha - Display-/Performance-Kompatibilität
        */
 
-      /* Balanced: keep the design, reduce GPU-heavy effects. */
       .solar-dashboard.perf-balanced .panel {
         box-shadow: 0 5px 16px rgba(0,0,0,0.13);
-      }
-
-      .solar-dashboard.perf-balanced .mppt-panel,
-      .solar-dashboard.perf-balanced .pv-total-panel,
-      .solar-dashboard.perf-balanced .battery-panel,
-      .solar-dashboard.perf-balanced .live-panel {
-        background-size: 100% 100%;
       }
 
       .solar-dashboard.perf-balanced .gauge-svg path,
@@ -1429,7 +1419,7 @@ cards:
         filter: none;
       }
 
-      /* Low: Safari 15 / old tablet compatibility layer. */
+      /* Old Safari / iPadOS 15 compatibility. / Kompatibilität für Safari/iPadOS 15. */
       .solar-dashboard.perf-low {
         --solar-surface-soft: var(--solar-surface);
         --solar-surface-strong: var(--solar-surface);
@@ -1448,36 +1438,20 @@ cards:
 
       .solar-dashboard.perf-low .mppt-panel {
         background:
-          radial-gradient(
-            circle at 50% 110%,
-            rgba(255, 180, 40, 0.08),
-            transparent 52%
-          ),
+          radial-gradient(circle at 50% 110%, rgba(255,180,40,0.08), transparent 52%),
           var(--solar-surface) !important;
       }
 
       .solar-dashboard.perf-low .pv-total-panel {
         background:
-          radial-gradient(
-            circle at 12% 110%,
-            rgba(255, 152, 0, 0.11),
-            transparent 48%
-          ),
-          radial-gradient(
-            circle at 88% 110%,
-            rgba(67, 160, 71, 0.10),
-            transparent 48%
-          ),
+          radial-gradient(circle at 12% 110%, rgba(255,152,0,0.11), transparent 48%),
+          radial-gradient(circle at 88% 110%, rgba(67,160,71,0.10), transparent 48%),
           var(--solar-surface) !important;
       }
 
       .solar-dashboard.perf-low .battery-panel {
         background:
-          radial-gradient(
-            circle at 55% 115%,
-            rgba(76, 175, 80, 0.10),
-            transparent 52%
-          ),
+          radial-gradient(circle at 55% 115%, rgba(76,175,80,0.10), transparent 52%),
           var(--solar-surface) !important;
       }
 
@@ -1495,21 +1469,13 @@ cards:
 
       .solar-dashboard.perf-low .payment-panel {
         background:
-          linear-gradient(
-            145deg,
-            rgba(66,165,245,0.08),
-            transparent 65%
-          ),
+          linear-gradient(145deg, rgba(66,165,245,0.08), transparent 65%),
           var(--solar-surface) !important;
       }
 
       .solar-dashboard.perf-low .runtime-panel {
         background:
-          linear-gradient(
-            145deg,
-            rgba(142,92,255,0.08),
-            transparent 65%
-          ),
+          linear-gradient(145deg, rgba(142,92,255,0.08), transparent 65%),
           var(--solar-surface) !important;
       }
 
@@ -1531,12 +1497,11 @@ cards:
         box-shadow: none !important;
       }
 
-      /* Wall display: larger and easier to read from a distance. */
+      /* Wall display profile. / Profil für Wand-Displays. */
       @media screen and (min-width: 700px) {
         .solar-dashboard.display-wall {
           gap: 12px !important;
-          grid-template-columns:
-            repeat(2, minmax(0, 1fr)) !important;
+          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
           grid-template-areas:
             "pv battery"
             "live live"
@@ -1545,8 +1510,7 @@ cards:
         }
 
         .solar-dashboard.display-wall .mppt-grid {
-          grid-template-columns:
-            repeat(var(--mppt-count), minmax(0, 1fr)) !important;
+          grid-template-columns: repeat(var(--mppt-count), minmax(0, 1fr)) !important;
           gap: 10px;
         }
 
@@ -1621,7 +1585,7 @@ cards:
 
       /*
        * ==========================================================
-       * GRUNDLAYOUT
+       * BASE LAYOUT / GRUNDLAYOUT
        * ==========================================================
        */
 
@@ -1784,7 +1748,7 @@ cards:
 
       /*
        * ==========================================================
-       * LIVE-ENERGIEFLUSS
+       * LIVE ENERGY FLOW / LIVE-ENERGIEFLUSS
        * ==========================================================
        */
 
@@ -2064,7 +2028,7 @@ cards:
 
       /*
        * ==========================================================
-       * VERGÜTUNG UND RESTLAUFZEIT
+       * REVENUE AND RUNTIME / VERGÜTUNG UND RESTLAUFZEIT
        * ==========================================================
        */
 
