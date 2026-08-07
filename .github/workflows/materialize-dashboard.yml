@@ -5,6 +5,7 @@ on:
     paths:
       - 'tools/dashboard_v7.yaml.gz.b64'
       - 'tools/apply_theme_v7_1.py'
+      - 'tools/apply_v72_theme.py'
       - '.github/workflows/materialize-dashboard.yml'
 
 permissions:
@@ -27,6 +28,11 @@ jobs:
         run: |
           python tools/apply_theme_v7_1.py
 
+      - name: Apply V7.2 adaptive glow theme
+        shell: bash
+        run: |
+          python tools/apply_v72_theme.py
+
       - name: Commit generated dashboard
         shell: bash
         run: |
@@ -37,5 +43,5 @@ jobs:
             echo "dashboard.yaml is already up to date"
             exit 0
           fi
-          git commit -m "Generate dashboard.yaml V7.1 with light/dark support"
+          git commit -m "Generate dashboard.yaml V7.2 adaptive theme"
           git push
