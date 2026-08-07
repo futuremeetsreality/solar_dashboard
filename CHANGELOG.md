@@ -1,5 +1,16 @@
 # Changelog
 
+## V7.1 - 2026-08-07
+
+- Vollständige Unterstützung für Home-Assistant-Hell- und Dunkelmodus ergänzt.
+- Kartenflächen verwenden nun die aktiven Home-Assistant-Theme-Variablen statt fest verdrahteter dunkler Farben.
+- Primär- und Sekundärtexte folgen automatisch dem aktiven Theme.
+- Rahmen, Trenner, MPPT-Hintergrundbögen und neutrale Balkenhintergründe passen sich automatisch an.
+- PV- und Batterie-Karten behalten ihre farbigen Akzente, verwenden aber eine themeabhängige Grundfläche.
+- Vergütungs- und Restlaufzeitkarten verwenden im Hell- und Dunkelmodus nur noch einen dezenten Blau-/Violett-Farbstich.
+- Power Flux Card erzwingt keinen dunklen Hintergrund mehr und folgt dem Home-Assistant-Theme.
+- Wechsel zwischen Hell und Dunkel erfordert keine zweite Dashboard-Konfiguration.
+
 ## V7 - 2026-08-07
 
 - MPPT-/PV-Tracker vollständig dynamisch gemacht.
