@@ -2,9 +2,28 @@
 
 Ein responsives PV-/Batterie-Dashboard für Home Assistant mit Power-Flux-Ansicht, dynamischen MPPT-Gauges, Tageswerten, Netzfluss, Batterie und Einspeisevergütung.
 
-Aktueller Stand: **V7**
+Aktueller Stand: **V7.2**
 
-## Was ist neu in V7?
+## Was ist neu in V7.2?
+
+V7.2 erweitert die automatische Hell-/Dunkelmodus-Unterstützung um ein adaptives Glow- und Verlaufsdesign.
+
+Die Karten verwenden die aktiven Home-Assistant-Themefarben als Basis und mischen die Solar-Akzentfarben automatisch dazu. Dadurch bleibt das Dashboard sowohl im hellen als auch im dunklen Modus kontrastreich, ohne auf die farbigen Verläufe zu verzichten.
+
+Angepasst wurden insbesondere:
+
+- MPPT-Karten mit Tracker-spezifischem Glow,
+- PV Total mit Orange-/Grün-Verlauf und verbessertem Textkontrast,
+- Batterie mit Grün-/Warmton-Glow,
+- Live-Leiste mit dezenten Farbzonen für PV, Haus, Netz und Batterie,
+- Vergütung mit blauem Glow,
+- Restlaufzeit mit violettem Glow,
+- adaptive Farben für kleine Tracker-/Prozenttexte,
+- adaptive Rahmen, Tracks, Inset-Flächen und neutrale Texte.
+
+Die Power Flux Card behält ihr eigenes automatisches Theme-Verhalten.
+
+## Was ist neu seit V7?
 
 V7 unterstützt eine **beliebige Anzahl an MPPT-/PV-Trackern**. Die Tracker werden nur noch in einer Liste konfiguriert. Daraus erzeugt das Dashboard automatisch:
 
@@ -38,6 +57,7 @@ In Home Assistant:
 3. **Manuell** auswählen.
 4. Den vollständigen Inhalt von `dashboard.yaml` einfügen.
 5. Speichern.
+6. Unter Profil / Erscheinungsbild zwischen Hell und Dunkel wechseln und beide Varianten prüfen.
 
 Es müssen nicht mehrere Dateien oder Karten eingebunden werden.
 
@@ -78,74 +98,19 @@ Bedeutung:
 
 ### Nur ein MPPT
 
-Lass nur einen Tracker in der Liste stehen.
+Nur einen Eintrag in `trackers` stehen lassen. Die MPPT-Karte nutzt automatisch die verfügbare Breite.
 
-### Drei MPPTs
+### Drei oder mehr MPPTs
 
-Füge einfach einen dritten Tracker hinzu:
+Weitere Tracker-Objekte ergänzen. Das Raster und der PV-Total-Balken werden automatisch erweitert.
 
-```js
-{
-  name: 'MPPT 3',
-  power: 'sensor.mein_mppt_3_power',
-  energyToday: 'sensor.mein_mppt_3_energy_today',
-  maxKw: 5.00,
-  colorStart: '#2196f3',
-  colorEnd: '#00e5ff'
-}
-```
+## Beispielanlage im Repository
 
-Das Layout und der PV-Balken passen sich automatisch an.
+Die Standardkonfiguration verwendet:
 
-## PV-Gesamtmaximum
+- MPPT 1: 9,10 kW
+- MPPT 2: 6,37 kW
+- automatisch berechnete PV-Gesamtleistung: 15,47 kW
+- Batterie: 12,50 kWh
 
-In V7 muss `pvMaxKw` nicht mehr separat gepflegt werden. Das Dashboard berechnet automatisch:
-
-```text
-PV max = Summe aller Tracker maxKw
-```
-
-Beispiel der mitgelieferten SolaX-Konfiguration:
-
-```text
-MPPT 1 = 9,10 kW
-MPPT 2 = 6,37 kW
-PV max  = 15,47 kW
-```
-
-## Batterie
-
-Die Batteriekapazität bleibt zentral konfigurierbar:
-
-```js
-limits: {
-  batteryCapacityKwh: 12.50
-}
-```
-
-## Sensoren
-
-Eine ausführliche Beschreibung jedes benötigten Messwerts findest du unter:
-
-[`docs/ENTITY_REFERENCE.md`](docs/ENTITY_REFERENCE.md)
-
-Dort ist beschrieben, **was** ein Sensor liefern muss. Die konkrete Integration bzw. der Hersteller ist egal.
-
-## Power Flux Card
-
-Die Power Flux Card ist eine eigenständige Custom Card und besitzt deshalb ihren eigenen `entities:`-Block am Anfang von `dashboard.yaml`.
-
-Diese Entity-IDs müssen bei einer Übernahme auf ein anderes System zusätzlich angepasst werden. Die Tracker-Liste betrifft den selbst entwickelten Dashboard-Bereich.
-
-## Testen
-
-Siehe [`docs/TESTING.md`](docs/TESTING.md).
-
-## Versionen
-
-- V6: zentrale Entity-Konfiguration und dokumentierte Sensoren.
-- V7: dynamische Anzahl von MPPT-/PV-Trackern.
-
-## Lizenz / Nutzung
-
-Das Projekt ist als Home-Assistant-Dashboard-Vorlage gedacht und darf an die eigene Anlage angepasst werden.
+Weitere Details zu den benötigten Sensoren stehen in [`docs/ENTITY_REFERENCE.md`](docs/ENTITY_REFERENCE.md).
