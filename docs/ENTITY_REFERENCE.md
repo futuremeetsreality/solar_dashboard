@@ -1,14 +1,51 @@
-# Entity Reference
+# Entity Reference – V7
 
-Diese Datei beschreibt, welche Messwerte für das Dashboard benötigt werden. Die Namen deiner Home-Assistant-Entities sind egal.
+Diese Datei beschreibt, welche Messwerte für das Dashboard benötigt werden. Die Namen deiner Home-Assistant-Entities sind egal. Entscheidend ist nur, dass der jeweilige Sensor den beschriebenen Wert liefert.
+
+## MPPT-/PV-Tracker
+
+V7 verwendet keine fest eingebauten `mppt1`-/`mppt2`-Variablen mehr. Jeder Tracker wird als Objekt in `CONFIG.trackers` eingetragen.
+
+Pro Tracker werden folgende Werte benötigt:
+
+| Schlüssel | Pflicht | Erwarteter Messwert | Einheit |
+|---|---|---|---|
+| `name` | Ja | Frei wählbarer Anzeigename, z. B. `MPPT 1` | Text |
+| `power` | Ja | Aktuelle Leistung dieses PV-/MPPT-Eingangs | W oder kW |
+| `energyToday` | Ja | Seit Mitternacht erzeugte Energie dieses Trackers | Wh oder kWh |
+| `maxKw` | Ja | Maximale/zugeordnete Generatorleistung dieses Trackers | kW |
+| `colorStart` | Nein | Startfarbe für Gauge und PV-Segment | HEX |
+| `colorEnd` | Nein | Endfarbe für Gauge und PV-Segment | HEX |
+
+Beispiel:
+
+```js
+{
+  name: 'MPPT 1',
+  power: 'sensor.mein_mppt_power',
+  energyToday: 'sensor.mein_mppt_energy_today',
+  maxKw: 8.00,
+  colorStart: '#ff9800',
+  colorEnd: '#ffd740'
+}
+```
+
+### Anzahl der Tracker
+
+- 1 Tracker: genau ein Objekt in `CONFIG.trackers`.
+- 2 Tracker: zwei Objekte.
+- 3 Tracker: drei Objekte.
+- Weitere Tracker können nach demselben Schema ergänzt werden.
+
+Das Dashboard erzeugt die MPPT-Karten und den geteilten PV-Balken automatisch.
+
+Die maximale PV-Gesamtleistung wird automatisch aus allen `maxKw`-Werten berechnet.
+
+## Weitere Dashboard-Entities
 
 | CONFIG-Schlüssel | Pflicht | Erwarteter Messwert | Einheit |
 |---|---|---|---|
-| `mppt1Power` | Ja | Aktuelle Leistung des ersten PV-/MPPT-Eingangs | W oder kW |
-| `mppt2Power` | Ja | Aktuelle Leistung des zweiten PV-/MPPT-Eingangs | W oder kW |
-| `mppt1EnergyToday` | Ja | Seit Mitternacht erzeugte Energie von MPPT 1 | Wh oder kWh |
-| `mppt2EnergyToday` | Ja | Seit Mitternacht erzeugte Energie von MPPT 2 | Wh oder kWh |
-| `pvPowerTotal` | Ja | Aktuelle gesamte PV-Leistung | W oder kW |
+| `pvPowerTotal` | Ja | Aktuelle gesamte PV-Leistung über alle Tracker | W oder kW |
 | `pvEnergyToday` | Ja | Gesamte PV-Produktion seit Mitternacht | Wh oder kWh |
 | `housePower` | Ja | Aktueller Gesamtverbrauch des Hauses | W oder kW |
 | `houseEnergyToday` | Nein | Hausverbrauch seit Mitternacht | Wh oder kWh |
@@ -17,41 +54,44 @@ Diese Datei beschreibt, welche Messwerte für das Dashboard benötigt werden. Di
 | `gridImportEnergyToday` | Ja | Netzbezug seit Mitternacht | Wh oder kWh |
 | `gridExportEnergyToday` | Ja | Netzeinspeisung seit Mitternacht | Wh oder kWh |
 | `batterySoc` | Ja | Ladezustand der Batterie | % |
-| `batteryPower` | Ja | Aktuelle Lade-/Entladeleistung | W oder kW |
-| `batteryEnergyRemaining` | Ja | Aktuell verbleibende gespeicherte Energie | Wh oder kWh |
+| `batteryPower` | Ja | Aktuelle Lade-/Entladeleistung der Batterie | W oder kW |
+| `batteryEnergyRemaining` | Ja | Aktuell noch gespeicherte/verfügbare Batterieenergie | Wh oder kWh |
 | `batteryChargeEnergyToday` | Ja | Heute in die Batterie geladene Energie | Wh oder kWh |
 | `batteryDischargeEnergyToday` | Ja | Heute aus der Batterie entladene Energie | Wh oder kWh |
-| `compensationToday` | Nein | Heutiger Einspeiseertrag / Vergütung | EUR |
-| `batteryRuntime` | Nein | Geschätzte Restlaufzeit der Batterie | Zahl oder Text |
+| `compensationToday` | Nein | Heutiger Einspeiseerlös | EUR |
+| `batteryRuntime` | Nein | Geschätzte Restlaufzeit der Batterie | Zahl/Text |
+
+## Vorzeichen der Batterieleistung
+
+Die aktuelle Dashboard-Logik erwartet:
+
+- positiver Wert = Batterie lädt,
+- negativer Wert = Batterie entlädt.
+
+Wenn deine Integration das umgekehrt liefert, muss die Batterielogik angepasst oder vorher ein Template-Sensor erstellt werden.
+
+## Hausverbrauch heute
+
+`houseEnergyToday` ist optional. Wenn kein entsprechender Sensor vorhanden ist, berechnet das Dashboard den Tagesverbrauch aus der Energiebilanz:
+
+```text
+PV-Produktion
++ Netzimport
++ Batterieentladung
+- Netzeinspeisung
+- Batterieladung
+= Hausverbrauch
+```
 
 ## Power Flux Card
 
-Die Power Flux Card benötigt dieselben Live-Sensoren noch einmal in ihrem eigenen `entities:`-Block. Das ist keine unnötige Doppelung im JavaScript, sondern eine technische Grenze zwischen zwei unabhängigen Lovelace Custom Cards.
+Die Power Flux Card ist unabhängig vom `CONFIG`-Block und hat in `dashboard.yaml` einen eigenen `entities:`-Abschnitt. Dort werden benötigt:
 
-Wichtigste Zuordnung:
+- aktuelle PV-Gesamtleistung,
+- Netzimport,
+- Netzexport,
+- Batterieleistung,
+- Batterie-SoC,
+- Hausverbrauch.
 
-| Power Flux Feld | Messwert |
-|---|---|
-| `solar` | aktuelle PV-Gesamtleistung |
-| `grid` | aktueller Netzimport |
-| `grid_export` | aktuelle Netzeinspeisung |
-| `battery` | aktuelle Batterieleistung |
-| `battery_soc` | Batterie-SoC |
-| `house` | aktueller Hausverbrauch |
-| `secondary_grid` | Netzeinspeisung heute |
-| `secondary_solar` | PV-Produktion heute |
-| `secondary_house` | Hausverbrauch heute |
-| `tertiary_house` | Netzimport heute |
-| `secondary_battery` | Batterie-Ladeenergie heute |
-| `grid_to_battery` | optionale aktuelle Leistung Netz → Batterie |
-
-## Vorzeichen der Batterie
-
-Die Dashboard-Logik geht derzeit davon aus:
-
-```text
-positiv  = Laden
-negativ  = Entladen
-```
-
-Bei umgekehrter Vorzeichenkonvention muss die Statuslogik in `dashboard.yaml` angepasst werden.
+Die dortigen Zusatzsensoren für Tageswerte sind abhängig von der verwendeten Power-Flux-Card-Konfiguration.
