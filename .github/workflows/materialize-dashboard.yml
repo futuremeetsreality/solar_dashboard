@@ -6,6 +6,7 @@ on:
       - 'tools/dashboard_v7.yaml.gz.b64'
       - 'tools/apply_theme_v7_1.py'
       - 'tools/apply_v72_theme.py'
+      - 'tools/apply_i18n_v0_8.py'
       - '.github/workflows/materialize-dashboard.yml'
 
 permissions:
@@ -18,20 +19,25 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Decode V7 dashboard
+      - name: Decode dashboard base
         shell: bash
         run: |
           base64 -d tools/dashboard_v7.yaml.gz.b64 | gunzip > dashboard.yaml
 
-      - name: Apply V7.1 Home Assistant theme support
+      - name: Apply Home Assistant theme support
         shell: bash
         run: |
           python tools/apply_theme_v7_1.py
 
-      - name: Apply V7.2 adaptive glow theme
+      - name: Apply adaptive glow theme
         shell: bash
         run: |
           python tools/apply_v72_theme.py
+
+      - name: Apply v0.8.0-alpha i18n
+        shell: bash
+        run: |
+          python tools/apply_i18n_v0_8.py
 
       - name: Commit generated dashboard
         shell: bash
@@ -43,5 +49,5 @@ jobs:
             echo "dashboard.yaml is already up to date"
             exit 0
           fi
-          git commit -m "Generate dashboard.yaml V7.2 adaptive theme"
+          git commit -m "Generate dashboard.yaml v0.8.0-alpha"
           git push
