@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.8.0-alpha - 2026-08-07
+
+- Switched project versioning from V-number milestones to semantic pre-release versioning.
+- Added dashboard UI languages `auto`, `de` and `en`.
+- `auto` follows the Home Assistant language; German uses `de`, all other languages currently fall back to English.
+- Added locale-aware number formatting (`de-AT` / `en-US`).
+- Translated live labels, PV Total, battery labels/status, revenue, runtime and unknown-state text.
+- Added English as the primary GitHub documentation language.
+- Added `README_DE.md` for German documentation.
+- Added English/German entity reference documentation.
+- Added English/German Home Assistant testing guides.
+- Kept the V7.2 adaptive light/dark glow and gradient design.
+- Kept dynamic support for any number of MPPT/PV trackers.
+
 ## V7.2 - 2026-08-07
 
 - Adaptives Glow- und Verlaufsdesign für Hell- und Dunkelmodus.
@@ -37,7 +51,6 @@
 - PV-Gesamtmaximum wird nicht mehr separat gepflegt, sondern aus der Summe aller `maxKw`-Werte berechnet.
 - Beispielkonfiguration weiterhin mit 9,10 kW für MPPT 1 und 6,37 kW für MPPT 2; daraus ergeben sich automatisch 15,47 kW PV max.
 - V6-Sensorstruktur für Haus, Netz und Batterie beibehalten.
-- README und Entity Reference auf V7 aktualisiert.
 
 ## V6 - 2026-08-07
 
