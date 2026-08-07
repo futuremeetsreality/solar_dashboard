@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.8.1-alpha - 2026-08-07
+
+- Added `displayMode`: `auto`, `desktop`, `tablet`, `wall`.
+- Added `performanceMode`: `auto`, `high`, `balanced`, `low`.
+- Added a dedicated wall-display layout with larger values, thicker bars and increased viewing-distance readability.
+- Added automatic tablet detection for the `auto` display profile.
+- Added browser capability detection for `performanceMode: auto`.
+- Added automatic low-performance fallback for older iPadOS/Safari versions and browsers without `color-mix()` support.
+- Added Safari 15-compatible fallback surfaces that avoid `color-mix()` dependent rendering.
+- Low mode disables expensive SVG filters, glow shadows, animations and transitions while retaining lightweight gradients.
+- Balanced mode keeps the visual design while reducing GPU-heavy effects.
+- Documented recommended settings for older permanently mounted iPads: `displayMode: 'wall'`, `performanceMode: 'auto'`.
+
 ## v0.8.0-alpha - 2026-08-07
 
 - Switched project versioning from V-number milestones to semantic pre-release versioning.
