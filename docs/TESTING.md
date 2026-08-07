@@ -1,46 +1,60 @@
-# Dashboard in Home Assistant testen
+# Testing the dashboard in Home Assistant
 
-## Voraussetzungen
+[English](TESTING.md) | [Deutsch](TESTING_DE.md)
 
-Über HACS → Frontend installieren:
+## Requirements
+
+Install via HACS → Frontend:
 
 - Button Card
 - Power Flux Card
 - card-mod
 
-Anschließend Home Assistant bzw. den Browser neu laden.
+Reload Home Assistant or the browser afterwards.
 
-## Schnellster Test
+## Fastest test
 
-`dashboard.yaml` ist eine vollständige Lovelace-Kartenkonfiguration.
+`dashboard.yaml` is a complete Lovelace card configuration.
 
-1. Home Assistant öffnen.
-2. Das gewünschte Dashboard öffnen.
-3. Dashboard bearbeiten.
-4. Karte hinzufügen.
-5. Karte **Manuell** auswählen.
-6. Den kompletten Inhalt von `dashboard.yaml` einfügen.
-7. Speichern.
+1. Open Home Assistant.
+2. Open the target dashboard.
+3. Edit dashboard.
+4. Add card.
+5. Select **Manual**.
+6. Paste the full contents of `dashboard.yaml`.
+7. Save.
 
-Die Datei beginnt mit:
+The file begins with:
 
 ```yaml
 type: vertical-stack
 cards:
 ```
 
-Sie gehört deshalb in **eine manuelle Karte** und nicht direkt in den Rohkonfigurationseditor des gesamten Dashboards.
+Therefore it belongs inside **one Manual card**, not directly in the raw configuration editor for the entire dashboard.
 
-## Eigene Anlage konfigurieren
+## Test language switching
 
-Im zweiten Kartenblock (`custom:button-card`) befindet sich der Abschnitt:
+Inside the JavaScript `CONFIG` block set:
 
-```text
-BENUTZERKONFIGURATION – NUR DIESEN BLOCK ANPASSEN
+```js
+language: 'auto',
 ```
 
-Dort werden die Entity-IDs und Anlagenlimits angepasst.
+Then test:
 
-Die Power Flux Card besitzt zusätzlich ihren eigenen `entities:`-Block am Anfang von `dashboard.yaml`. Dort müssen die entsprechenden Live-/Tages-Sensoren ebenfalls angepasst werden.
+- `auto`
+- `de`
+- `en`
 
-Für die aktuell hinterlegte SolaX-Testanlage sind die Werte bereits vorkonfiguriert.
+With `auto`, change the Home Assistant profile language and reload the dashboard. German should use German labels and decimal commas; English should use English labels and decimal points.
+
+## Test light and dark mode
+
+Switch Home Assistant appearance between Light and Dark. The dashboard should keep readable text, adaptive card surfaces, gradients and glows in both modes.
+
+## Configure your own installation
+
+The `custom:button-card` contains the main user configuration. Map the tracker and entity IDs there.
+
+The Power Flux Card has a separate `entities:` block at the beginning of `dashboard.yaml`; map its entities separately.
