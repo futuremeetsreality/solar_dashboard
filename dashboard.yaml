@@ -1,5 +1,5 @@
-# solar_dashboard V7 - dashboard.yaml
-# Aktualisiert: 2026-08-07 20:25
+# solar_dashboard V7.1 - dashboard.yaml
+# Aktualisiert: 2026-08-07 21:25
 # Voraussetzungen: custom:button-card, custom:power-flux-card, card-mod
 
 type: vertical-stack
@@ -108,26 +108,12 @@ cards:
     card_mod:
       style: |
         ha-card {
-          background:
-            linear-gradient(
-              145deg,
-              rgba(16, 29, 39, 0.98),
-              rgba(5, 12, 18, 0.98)
-            ) !important;
-
-          border: 1px solid rgba(255, 255, 255, 0.08) !important;
+          background: var(--ha-card-background, var(--card-background-color)) !important;
+          border: 1px solid var(--divider-color, rgba(127,127,127,0.22)) !important;
           border-radius: 24px !important;
-
-          box-shadow:
-            0 8px 24px rgba(0, 0, 0, 0.28) !important;
-
-          color: white !important;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16) !important;
+          color: var(--primary-text-color) !important;
           overflow: hidden !important;
-
-          --primary-text-color: #ffffff;
-          --secondary-text-color: rgba(255, 255, 255, 0.62);
-          --card-background-color: transparent;
-          --ha-card-background: transparent;
         }
 
         ha-card * {
@@ -511,7 +497,7 @@ cards:
                   d="M 20 100 A 80 80 0 0 1 180 100"
                   pathLength="100"
                   fill="none"
-                  stroke="rgba(255,255,255,0.11)"
+                  stroke="var(--solar-gauge-track)"
                   stroke-width="13"
                   stroke-linecap="round"
                 />
@@ -1248,11 +1234,23 @@ cards:
        */
 
       .solar-dashboard {
+        --solar-surface: var(--ha-card-background, var(--card-background-color));
+        --solar-surface-soft: color-mix(in srgb, var(--solar-surface) 94%, var(--primary-text-color) 6%);
+        --solar-surface-strong: color-mix(in srgb, var(--solar-surface) 88%, var(--primary-text-color) 12%);
+        --solar-text: var(--primary-text-color);
+        --solar-text-secondary: var(--secondary-text-color);
+        --solar-border: var(--divider-color, color-mix(in srgb, var(--primary-text-color) 14%, transparent));
+        --solar-divider: var(--divider-color, color-mix(in srgb, var(--primary-text-color) 16%, transparent));
+        --solar-gauge-track: color-mix(in srgb, var(--primary-text-color) 13%, transparent);
+        --solar-inset: color-mix(in srgb, var(--primary-text-color) 5%, transparent);
+        --solar-track: color-mix(in srgb, var(--primary-text-color) 8%, transparent);
+        --solar-shadow: 0 8px 24px rgba(0,0,0,0.16);
+
         box-sizing: border-box;
         display: grid;
         width: 100%;
         gap: 10px;
-        color: white;
+        color: var(--solar-text);
 
         grid-template-columns:
           repeat(2, minmax(0, 1fr));
@@ -1268,16 +1266,15 @@ cards:
         box-sizing: border-box;
         min-width: 0;
         overflow: hidden;
-        border: 1px solid rgba(255,255,255,0.08);
+        border: 1px solid var(--solar-border);
         border-radius: 24px;
         background:
           linear-gradient(
             145deg,
-            rgba(16,29,39,0.98),
-            rgba(5,12,18,0.98)
+            var(--solar-surface-soft),
+            var(--solar-surface)
           );
-        box-shadow:
-          0 8px 24px rgba(0,0,0,0.28);
+        box-shadow: var(--solar-shadow);
       }
 
       .mppt1-panel {
@@ -1368,9 +1365,9 @@ cards:
         min-height: 48px;
         margin: auto auto 0 auto;
         padding: 7px 8px;
-        border: 1px solid rgba(255,255,255,0.09);
+        border: 1px solid var(--solar-border);
         border-radius: 16px;
-        background: rgba(255,255,255,0.035);
+        background: var(--solar-inset);
         text-align: center;
       }
 
@@ -1422,7 +1419,7 @@ cards:
         justify-content: center;
         padding: 0 5px;
         border-right:
-          1px solid rgba(255,255,255,0.10);
+          1px solid var(--solar-divider);
         text-align: center;
       }
 
@@ -1465,7 +1462,7 @@ cards:
         width: 100%;
         margin-top: 7px;
         overflow: hidden;
-        color: rgba(255,255,255,0.62);
+        color: var(--solar-text-secondary);
         font-size: 7.5px;
         font-weight: 600;
         line-height: 1.3;
@@ -1525,8 +1522,8 @@ cards:
           ),
           linear-gradient(
             145deg,
-            rgba(16,29,39,0.98),
-            rgba(5,12,18,0.98)
+            var(--solar-surface-soft),
+            var(--solar-surface)
           );
       }
 
@@ -1599,8 +1596,8 @@ cards:
           ),
           linear-gradient(
             145deg,
-            rgba(16,29,39,0.98),
-            rgba(5,12,18,0.98)
+            var(--solar-surface-soft),
+            var(--solar-surface)
           );
       }
 
@@ -1617,16 +1614,16 @@ cards:
         width: 17px;
         height: 6px;
         border-radius: 3px 3px 0 0;
-        background: rgba(255,255,255,0.68);
+        background: color-mix(in srgb, var(--solar-text) 68%, transparent);
       }
 
       .battery-body {
         position: absolute;
         inset: 0;
         overflow: hidden;
-        border: 3px solid rgba(255,255,255,0.68);
+        border: 3px solid color-mix(in srgb, var(--solar-text) 68%, transparent);
         border-radius: 8px;
-        background: rgba(255,255,255,0.05);
+        background: var(--solar-inset);
       }
 
       .battery-fill {
@@ -1696,8 +1693,8 @@ cards:
         background:
           linear-gradient(
             145deg,
-            rgba(12,31,46,0.98),
-            rgba(4,12,18,0.98)
+            color-mix(in srgb, var(--solar-surface) 86%, #42a5f5 14%),
+            var(--solar-surface)
           );
       }
 
@@ -1717,8 +1714,8 @@ cards:
         background:
           linear-gradient(
             145deg,
-            rgba(28,17,49,0.98),
-            rgba(7,9,19,0.98)
+            color-mix(in srgb, var(--solar-surface) 86%, #8e5cff 14%),
+            var(--solar-surface)
           );
       }
 
@@ -1748,7 +1745,7 @@ cards:
 
       .information-subtitle {
         margin-top: 4px;
-        color: rgba(255,255,255,0.48);
+        color: var(--solar-text-secondary);
         font-size: 10px;
       }
 
@@ -2892,8 +2889,8 @@ cards:
           ),
           linear-gradient(
             145deg,
-            rgba(16,29,39,0.98),
-            rgba(5,12,18,0.98)
+            var(--solar-surface-soft),
+            var(--solar-surface)
           );
       }
 
@@ -2906,8 +2903,8 @@ cards:
           ),
           linear-gradient(
             145deg,
-            rgba(16,29,39,0.98),
-            rgba(5,12,18,0.98)
+            var(--solar-surface-soft),
+            var(--solar-surface)
           );
       }
 
@@ -2924,7 +2921,7 @@ cards:
       }
 
       .v5-bar-title {
-        color: rgba(255,255,255,0.56);
+        color: var(--solar-text-secondary);
         font-size: 8px;
         font-weight: 700;
         letter-spacing: 0.8px;
@@ -2933,7 +2930,7 @@ cards:
 
       .v5-bar-main {
         margin-top: 2px;
-        color: white;
+        color: var(--solar-text);
         font-size: 18px;
         font-weight: 700;
         line-height: 1;
@@ -2963,11 +2960,11 @@ cards:
         width: 100%;
         height: 12px;
         overflow: hidden;
-        border: 1px solid rgba(255,255,255,0.10);
+        border: 1px solid var(--solar-divider);
         border-radius: 999px;
-        background: rgba(255,255,255,0.07);
+        background: var(--solar-track);
         box-shadow:
-          inset 0 1px 3px rgba(0,0,0,0.45);
+          inset 0 1px 3px rgba(0,0,0,0.22);
       }
 
       .pv-segment {
@@ -3012,7 +3009,7 @@ cards:
         gap: 4px;
         width: 100%;
         min-width: 0;
-        color: rgba(255,255,255,0.58);
+        color: var(--solar-text-secondary);
         font-size: 6.5px;
         font-weight: 600;
         line-height: 1;
@@ -3151,7 +3148,7 @@ cards:
         gap: 5px;
         width: 100%;
         min-width: 0;
-        color: rgba(255,255,255,0.58);
+        color: var(--solar-text-secondary);
         font-size: 5.8px;
         font-weight: 600;
         line-height: 1;
