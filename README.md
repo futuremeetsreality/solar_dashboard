@@ -2,9 +2,9 @@
 
 [English](README.md) | [Deutsch](README_DE.md)
 
-A responsive solar and battery dashboard for Home Assistant with Power Flux visualization, dynamic MPPT gauges, daily energy values, grid flow, battery status, feed-in revenue, adaptive light/dark styling, and bilingual UI support.
+A responsive solar and battery dashboard for Home Assistant with Power Flux visualization, dynamic MPPT gauges, daily energy values, grid flow, battery status, feed-in revenue, adaptive light/dark styling, bilingual UI support, and dedicated wall-display profiles.
 
-Current version: **v0.8.0-alpha**
+Current version: **v0.8.1-alpha**
 
 > Alpha means the dashboard is already usable, but configuration, compatibility and UI behavior are still being tested across different Home Assistant installations.
 
@@ -19,6 +19,8 @@ Current version: **v0.8.0-alpha**
 - `auto`, `de` and `en` dashboard languages
 - Locale-aware number formatting
 - Manufacturer-independent sensor mapping
+- Dedicated `wall` layout for permanently mounted tablets
+- Automatic low-performance compatibility mode for older Safari/iPadOS devices
 
 ## Requirements
 
@@ -59,6 +61,38 @@ Supported values:
 - `en` — force English
 
 Number formatting follows the selected language as well.
+
+## Display and performance profiles
+
+v0.8.1-alpha adds two independent options:
+
+```js
+displayMode: 'auto',
+performanceMode: 'auto',
+```
+
+`displayMode` supports:
+
+- `auto` — normal responsive behavior; tablet-like touch devices are detected as tablets
+- `desktop` — desktop profile
+- `tablet` — tablet profile
+- `wall` — larger values, thicker bars and optimized spacing for permanently mounted displays
+
+`performanceMode` supports:
+
+- `auto` — checks browser capabilities automatically
+- `high` — full visual effects
+- `balanced` — reduced GPU-heavy effects
+- `low` — compatibility profile with simpler rendering, no expensive SVG filters and no animations
+
+Older Safari/iPadOS versions that do not support `color-mix()` automatically fall back to `low` mode. This is intended for older wall tablets such as an iPad Air 2 on iPadOS 15.
+
+For a permanently mounted older iPad, start with:
+
+```js
+displayMode: 'wall',
+performanceMode: 'auto',
+```
 
 ## MPPT / tracker configuration
 
@@ -106,7 +140,7 @@ See:
 
 ## Versioning
 
-The project now follows semantic pre-release versioning:
+The project follows semantic pre-release versioning:
 
 - `v0.8.x-alpha` — active feature development and compatibility testing
 - `v0.9.x-beta` — feature-complete testing phase
