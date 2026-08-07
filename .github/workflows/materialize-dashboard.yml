@@ -3,7 +3,7 @@ name: Build dashboard.yaml
 on:
   push:
     paths:
-      - 'tools/dashboard.yaml.gz.b64'
+      - 'tools/dashboard_v7.yaml.gz.b64'
       - '.github/workflows/materialize-dashboard.yml'
 
 permissions:
@@ -19,7 +19,7 @@ jobs:
       - name: Decode dashboard
         shell: bash
         run: |
-          base64 -d tools/dashboard.yaml.gz.b64 | gunzip > dashboard.yaml
+          base64 -d tools/dashboard_v7.yaml.gz.b64 | gunzip > dashboard.yaml
 
       - name: Commit generated dashboard
         shell: bash
@@ -31,5 +31,5 @@ jobs:
             echo "dashboard.yaml is already up to date"
             exit 0
           fi
-          git commit -m "Generate dashboard.yaml from V6 source"
+          git commit -m "Generate dashboard.yaml from V7 source"
           git push
