@@ -36,6 +36,7 @@ if "const I18N = {" not in text:
             de: {
               today: 'Heute',
               todayUpper: 'HEUTE',
+              current: 'Aktuell',
               max: 'Max.',
               maxUpper: 'MAX',
               pv: 'PV',
@@ -58,6 +59,7 @@ if "const I18N = {" not in text:
             en: {
               today: 'Today',
               todayUpper: 'TODAY',
+              current: 'Current',
               max: 'Max.',
               maxUpper: 'MAX',
               pv: 'PV',
@@ -122,9 +124,11 @@ replacements = {
     '>\n                      HAUS\n                    </div>': '>\n                      ${t.house}\n                    </div>',
     '>\n                      NETZ\n                    </div>': '>\n                      ${t.grid}\n                    </div>',
     '>\n                      BATTERIE\n                    </div>': '>\n                      ${t.battery}\n                    </div>',
+    '>\n                    BATTERIE\n                  </div>': '>\n                    ${t.battery}\n                  </div>',
     'Heute ${formatEnergy(solarToday)} kWh': '${t.today} ${formatEnergy(solarToday)} kWh',
     'Max. ${formatNumber(pvMaximum, 2, 2)} kW': '${t.max} ${formatNumber(pvMaximum, 2, 2)} kW',
     'Heute ${formatEnergy(houseToday)} kWh': '${t.today} ${formatEnergy(houseToday)} kWh',
+    'Aktuell ${formatPower(housePower)} kW': '${t.current} ${formatPower(housePower)} kW',
     'Import\n                        ${formatEnergy(importToday)}': '${t.import}\n                        ${formatEnergy(importToday)}',
     'Export\n                        ${formatEnergy(exportToday)}': '${t.export}\n                        ${formatEnergy(exportToday)}',
     'Laden\n                        ${formatEnergy(batteryInputToday)}': '${t.charge}\n                        ${formatEnergy(batteryInputToday)}',
