@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # File: tools/build_dashboard.py
-# Timestamp: 2026-08-08 08:08 +0200
+# Timestamp: 2026-08-08 08:15 +0200
 
 """Build the generated Home Assistant dashboard.
 
@@ -8,15 +8,8 @@ Build pipeline / Build-Pipeline:
 1. Decode the proven legacy V7 base.
 2. Apply the existing compatibility/theme/i18n/display migrations.
 3. Replace migrated sections with modular sources from src/.
-4. Apply configurable module visibility/order and prepared tracker slots.
+4. Apply configurable module visibility/order/size and prepared tracker slots.
 5. Write the single user-facing dashboard.yaml.
-
-The legacy base is intentionally kept during the v0.8.x migration so the working
-layout is not rewritten in one risky step. New development moves into src/.
-
-Die Legacy-Basis bleibt während der v0.8.x-Migration absichtlich erhalten, damit
-das funktionierende Layout nicht in einem riskanten Schritt neu geschrieben wird.
-Neue Entwicklung wandert ab jetzt nach src/.
 """
 
 from __future__ import annotations
@@ -57,11 +50,7 @@ def run_legacy_patches() -> None:
 
 def read_source_object(path: Path, variable: str) -> str:
     text = path.read_text(encoding="utf-8")
-    match = re.search(
-        rf"const\s+{re.escape(variable)}\s*=\s*(\{{.*\}})\s*;",
-        text,
-        re.S,
-    )
+    match = re.search(rf"const\s+{re.escape(variable)}\s*=\s*(\{{.*\}})\s*;", text, re.S)
     if not match:
         raise SystemExit(f"Could not read {variable} from {path}")
     return match.group(1)
@@ -80,14 +69,7 @@ def indent_source(text: str, spaces: int) -> str:
 
 def apply_modular_sources() -> None:
     text = DASHBOARD.read_text(encoding="utf-8")
-
-    # Interim version before the module patch / Zwischenversion vor dem Modul-Patch
-    text = re.sub(
-        r"# solar_dashboard .*? - dashboard\.yaml",
-        "# solar_dashboard v0.8.2-alpha - dashboard.yaml",
-        text,
-        count=1,
-    )
+    text = re.sub(r"# solar_dashboard .*? - dashboard\.yaml", "# solar_dashboard v0.8.2-alpha - dashboard.yaml", text, count=1)
 
     notice = (
         "# GENERATED FILE - edit src/ and tools/build_dashboard.py instead.\n"
@@ -103,28 +85,18 @@ def apply_modular_sources() -> None:
         "performanceMode": source_setting("performanceMode", "auto"),
     }
     for key, value in defaults.items():
-        text = re.sub(
-            rf"({re.escape(key)}\s*:\s*)'[^']+'",
-            rf"\1'{value}'",
-            text,
-            count=1,
-        )
+        text = re.sub(rf"({re.escape(key)}\s*:\s*)'[^']+'", rf"\1'{value}'", text, count=1)
 
     i18n = read_source_object(SRC / "i18n.js", "I18N_SOURCE")
     i18n_match = re.search(r"const I18N = \{.*?\n          \};", text, re.S)
     if not i18n_match:
         raise SystemExit("Generated dashboard I18N block not found")
     indented_i18n = "const I18N = " + i18n.replace("\n", "\n          ") + ";"
-    text = text[: i18n_match.start()] + indented_i18n + text[i18n_match.end() :]
+    text = text[:i18n_match.start()] + indented_i18n + text[i18n_match.end():]
 
     layout_source = (SRC / "layout.js").read_text(encoding="utf-8")
     layout_body = re.sub(r"^/\*.*?\*/\s*", "", layout_source, count=1, flags=re.S).strip()
-    layout_match = re.search(
-        r"          const configuredDisplayMode =.*?"
-        r"          if \(performanceMode === 'auto'\) \{.*?\n          \}",
-        text,
-        re.S,
-    )
+    layout_match = re.search(r"          const configuredDisplayMode =.*?          if \(performanceMode === 'auto'\) \{.*?\n          \}", text, re.S)
     if not layout_match:
         raise SystemExit("Display/performance resolver not found")
     text = text[:layout_match.start()] + indent_source(layout_body, 10) + text[layout_match.end():]
@@ -152,17 +124,12 @@ def apply_modular_sources() -> None:
     helper = indent_source(helper_match.group(0), 10)
     marker = "          /*\n           * ========================================================\n           * AKTUELLE LEISTUNGEN"
     if "function formatRuntimeSensor(" not in text:
-        if marker not in text:
-            raise SystemExit("Current-power marker not found")
         text = text.replace(marker, helper + "\n\n" + marker, 1)
 
     styles = (SRC / "styles.css").read_text(encoding="utf-8").strip()
     styles = indent_source(styles, 6)
     css_match = re.search(
-        r"      /\*\n       \* ==========================================================\n"
-        r"       \* v0\.8\.1-alpha .*?DISPLAY / PERFORMANCE PROFILES.*?"
-        r"(?=      /\*\n       \* ==========================================================\n"
-        r"       \* GRUNDLAYOUT)",
+        r"      /\*\n       \* ==========================================================\n       \* v0\.8\.1-alpha .*?DISPLAY / PERFORMANCE PROFILES.*?(?=      /\*\n       \* ==========================================================\n       \* GRUNDLAYOUT)",
         text,
         re.S,
     )
@@ -171,8 +138,7 @@ def apply_modular_sources() -> None:
     text = text[:css_match.start()] + styles + "\n\n" + text[css_match.end():]
 
     replacements = {
-        "BENUTZERKONFIGURATION – NUR DIESEN BLOCK ANPASSEN":
-            "USER CONFIGURATION / BENUTZERKONFIGURATION – ONLY EDIT THIS BLOCK / NUR DIESEN BLOCK ANPASSEN",
+        "BENUTZERKONFIGURATION – NUR DIESEN BLOCK ANPASSEN": "USER CONFIGURATION / BENUTZERKONFIGURATION – ONLY EDIT THIS BLOCK / NUR DIESEN BLOCK ANPASSEN",
         "HILFSFUNKTIONEN": "HELPER FUNCTIONS / HILFSFUNKTIONEN",
         "AKTUELLE LEISTUNGEN": "CURRENT POWER / AKTUELLE LEISTUNGEN",
         "TAGESENERGIEN": "DAILY ENERGY / TAGESENERGIEN",
@@ -202,19 +168,19 @@ def sanity_check() -> None:
         "type: vertical-stack",
         "custom:power-flux-card",
         "custom:button-card",
-        "v0.8.3-alpha",
+        "v0.8.4-alpha",
         "language: 'auto'",
         "displayMode: 'auto'",
         "performanceMode: 'auto'",
         "modules: [",
+        "size: 'large'",
+        "module-size-small",
+        "module-size-large",
+        "module-size-max",
         "enabled: false",
         "MPPT 4",
-        "const availableModules = [",
-        "module-hidden",
         "function formatRuntimeSensor(",
         "const I18N = {",
-        "solar-dashboard.perf-low",
-        "solar-dashboard.display-wall",
     ]
     missing = [item for item in required if item not in text]
     if missing:
@@ -227,4 +193,4 @@ if __name__ == "__main__":
     apply_modular_sources()
     apply_module_patch()
     sanity_check()
-    print("Built dashboard.yaml v0.8.3-alpha from modular sources")
+    print("Built dashboard.yaml v0.8.4-alpha from modular sources")
