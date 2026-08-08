@@ -211,52 +211,52 @@ cards:
              * Power Flux bleibt die separate erste Lovelace-Karte.
              */
             modules: [
-    'mppt',
-    'pvTotal',
-    'battery',
-    'live',
-    'payment',
-    'runtime'
-  ],
+                'mppt',
+                'pvTotal',
+                'battery',
+                'live',
+                'payment',
+                'runtime'
+              ],
 
             trackers: [
-    {
-      enabled: true,
-      name: 'MPPT 1',
-      power: 'sensor.solax_inverter_pv_power_1',
-      energyToday: 'sensor.technikraum_solax_inverter_mppt_1_tageszahler',
-      maxKw: 9.10,
-      colorStart: '#ff9800',
-      colorEnd: '#ffd740'
-    },
-    {
-      enabled: true,
-      name: 'MPPT 2',
-      power: 'sensor.solax_inverter_pv_power_2',
-      energyToday: 'sensor.technikraum_solax_inverter_mppt_2_tageszahler',
-      maxKw: 6.37,
-      colorStart: '#43a047',
-      colorEnd: '#76ff7a'
-    },
-    {
-      enabled: false,
-      name: 'MPPT 3',
-      power: '',
-      energyToday: '',
-      maxKw: 0,
-      colorStart: '#2196f3',
-      colorEnd: '#00e5ff'
-    },
-    {
-      enabled: false,
-      name: 'MPPT 4',
-      power: '',
-      energyToday: '',
-      maxKw: 0,
-      colorStart: '#ab47bc',
-      colorEnd: '#e040fb'
-    }
-  ],
+                {
+                  enabled: true,
+                  name: 'MPPT 1',
+                  power: 'sensor.solax_inverter_pv_power_1',
+                  energyToday: 'sensor.technikraum_solax_inverter_mppt_1_tageszahler',
+                  maxKw: 9.10,
+                  colorStart: '#ff9800',
+                  colorEnd: '#ffd740'
+                },
+                {
+                  enabled: true,
+                  name: 'MPPT 2',
+                  power: 'sensor.solax_inverter_pv_power_2',
+                  energyToday: 'sensor.technikraum_solax_inverter_mppt_2_tageszahler',
+                  maxKw: 6.37,
+                  colorStart: '#43a047',
+                  colorEnd: '#76ff7a'
+                },
+                {
+                  enabled: false,
+                  name: 'MPPT 3',
+                  power: '',
+                  energyToday: '',
+                  maxKw: 0,
+                  colorStart: '#2196f3',
+                  colorEnd: '#00e5ff'
+                },
+                {
+                  enabled: false,
+                  name: 'MPPT 4',
+                  power: '',
+                  energyToday: '',
+                  maxKw: 0,
+                  colorStart: '#ab47bc',
+                  colorEnd: '#e040fb'
+                }
+              ],
 
             entities: {
 
@@ -1477,15 +1477,11 @@ cards:
       }
 
       @media screen and (max-width: 699px) {
-        .solar-dashboard.modules-custom {
-          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-        }
-      }
-
-      @media screen and (min-width: 700px) {
-        .solar-dashboard.modules-custom.display-wall {
-          grid-template-areas: none !important;
-          grid-auto-flow: row dense !important;
+        .solar-dashboard.modules-custom > .module-pv-total,
+        .solar-dashboard.modules-custom > .module-battery,
+        .solar-dashboard.modules-custom > .module-payment,
+        .solar-dashboard.modules-custom > .module-runtime {
+          grid-column: 1 / -1 !important;
         }
       }
 
