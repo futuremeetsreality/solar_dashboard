@@ -5,6 +5,7 @@ on:
     paths:
       - 'src/**'
       - 'tools/build_dashboard.py'
+      - 'tools/apply_modules_v0_8_3.py'
       - 'tools/dashboard_v7.yaml.gz.b64'
       - 'tools/apply_theme_v7_1.py'
       - 'tools/apply_v72_theme.py'
@@ -37,5 +38,5 @@ jobs:
             echo "dashboard.yaml is already up to date"
             exit 0
           fi
-          git commit -m "Generate dashboard.yaml v0.8.2-alpha"
+          git commit -m "Generate dashboard.yaml v0.8.3-alpha"
           git push
