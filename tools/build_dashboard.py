@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # File: tools/build_dashboard.py
-# Timestamp: 2026-08-07 22:55 +0200
+# Timestamp: 2026-08-08 08:08 +0200
 
 """Build the generated Home Assistant dashboard.
 
@@ -8,7 +8,8 @@ Build pipeline / Build-Pipeline:
 1. Decode the proven legacy V7 base.
 2. Apply the existing compatibility/theme/i18n/display migrations.
 3. Replace migrated sections with modular sources from src/.
-4. Write the single user-facing dashboard.yaml.
+4. Apply configurable module visibility/order and prepared tracker slots.
+5. Write the single user-facing dashboard.yaml.
 
 The legacy base is intentionally kept during the v0.8.x migration so the working
 layout is not rewritten in one risky step. New development moves into src/.
@@ -37,6 +38,8 @@ LEGACY_PATCHES = [
     ROOT / "tools" / "apply_i18n_v0_8.py",
     ROOT / "tools" / "apply_display_v0_8_1.py",
 ]
+
+MODULE_PATCH = ROOT / "tools" / "apply_modules_v0_8_3.py"
 
 
 def decode_base() -> None:
@@ -78,7 +81,7 @@ def indent_source(text: str, spaces: int) -> str:
 def apply_modular_sources() -> None:
     text = DASHBOARD.read_text(encoding="utf-8")
 
-    # Version header / Versionskopf
+    # Interim version before the module patch / Zwischenversion vor dem Modul-Patch
     text = re.sub(
         r"# solar_dashboard .*? - dashboard\.yaml",
         "# solar_dashboard v0.8.2-alpha - dashboard.yaml",
@@ -86,7 +89,6 @@ def apply_modular_sources() -> None:
         count=1,
     )
 
-    # Bilingual generated-file notice / Zweisprachiger Hinweis zur generierten Datei
     notice = (
         "# GENERATED FILE - edit src/ and tools/build_dashboard.py instead.\n"
         "# GENERIERTE DATEI - Änderungen bitte in src/ und tools/build_dashboard.py vornehmen.\n"
@@ -95,7 +97,6 @@ def apply_modular_sources() -> None:
         first_newline = text.find("\n") + 1
         text = text[:first_newline] + notice + text[first_newline:]
 
-    # Central defaults from src/config.js / Zentrale Defaults aus src/config.js
     defaults = {
         "language": source_setting("language", "auto"),
         "displayMode": source_setting("displayMode", "auto"),
@@ -109,8 +110,6 @@ def apply_modular_sources() -> None:
             count=1,
         )
 
-    # Replace I18N table from src/i18n.js.
-    # I18N-Tabelle aus src/i18n.js ersetzen.
     i18n = read_source_object(SRC / "i18n.js", "I18N_SOURCE")
     i18n_match = re.search(r"const I18N = \{.*?\n          \};", text, re.S)
     if not i18n_match:
@@ -118,8 +117,6 @@ def apply_modular_sources() -> None:
     indented_i18n = "const I18N = " + i18n.replace("\n", "\n          ") + ";"
     text = text[: i18n_match.start()] + indented_i18n + text[i18n_match.end() :]
 
-    # Replace display/performance resolver from src/layout.js.
-    # Display-/Performance-Erkennung aus src/layout.js ersetzen.
     layout_source = (SRC / "layout.js").read_text(encoding="utf-8")
     layout_body = re.sub(r"^/\*.*?\*/\s*", "", layout_source, count=1, flags=re.S).strip()
     layout_match = re.search(
@@ -130,13 +127,8 @@ def apply_modular_sources() -> None:
     )
     if not layout_match:
         raise SystemExit("Display/performance resolver not found")
-    text = (
-        text[: layout_match.start()]
-        + indent_source(layout_body, 10)
-        + text[layout_match.end() :]
-    )
+    text = text[:layout_match.start()] + indent_source(layout_body, 10) + text[layout_match.end():]
 
-    # Unit-aware battery runtime / Restlaufzeit mit Einheit
     old_runtime = """          const runtimeRaw =
             runtimeSensor?.state || t.unknown;
 
@@ -153,8 +145,6 @@ def apply_modular_sources() -> None:
         raise SystemExit("Battery runtime block not found")
     text = text.replace(old_runtime, new_runtime, 1)
 
-    # Inject modular runtime helper from src/logic.js.
-    # Modularen Laufzeit-Helfer aus src/logic.js einfügen.
     logic_source = (SRC / "logic.js").read_text(encoding="utf-8")
     helper_match = re.search(r"function formatRuntimeSensor\(.*?\n\}", logic_source, re.S)
     if not helper_match:
@@ -166,8 +156,6 @@ def apply_modular_sources() -> None:
             raise SystemExit("Current-power marker not found")
         text = text.replace(marker, helper + "\n\n" + marker, 1)
 
-    # Replace display/performance CSS with src/styles.css.
-    # Display-/Performance-CSS durch src/styles.css ersetzen.
     styles = (SRC / "styles.css").read_text(encoding="utf-8").strip()
     styles = indent_source(styles, 6)
     css_match = re.search(
@@ -180,10 +168,8 @@ def apply_modular_sources() -> None:
     )
     if not css_match:
         raise SystemExit("Legacy display/performance CSS block not found")
-    text = text[: css_match.start()] + styles + "\n\n" + text[css_match.end() :]
+    text = text[:css_match.start()] + styles + "\n\n" + text[css_match.end():]
 
-    # Bilingual user-facing code comments. Historical CSS comments are migrated gradually.
-    # Zweisprachige Nutzer-Kommentare. Historische CSS-Kommentare werden schrittweise migriert.
     replacements = {
         "BENUTZERKONFIGURATION – NUR DIESEN BLOCK ANPASSEN":
             "USER CONFIGURATION / BENUTZERKONFIGURATION – ONLY EDIT THIS BLOCK / NUR DIESEN BLOCK ANPASSEN",
@@ -204,16 +190,27 @@ def apply_modular_sources() -> None:
     DASHBOARD.write_text(text, encoding="utf-8")
 
 
+def apply_module_patch() -> None:
+    if not MODULE_PATCH.exists():
+        raise SystemExit(f"Missing module patch: {MODULE_PATCH}")
+    runpy.run_path(str(MODULE_PATCH), run_name="__main__")
+
+
 def sanity_check() -> None:
     text = DASHBOARD.read_text(encoding="utf-8")
     required = [
         "type: vertical-stack",
         "custom:power-flux-card",
         "custom:button-card",
-        "v0.8.2-alpha",
+        "v0.8.3-alpha",
         "language: 'auto'",
         "displayMode: 'auto'",
         "performanceMode: 'auto'",
+        "modules: [",
+        "enabled: false",
+        "MPPT 4",
+        "const availableModules = [",
+        "module-hidden",
         "function formatRuntimeSensor(",
         "const I18N = {",
         "solar-dashboard.perf-low",
@@ -228,5 +225,6 @@ if __name__ == "__main__":
     decode_base()
     run_legacy_patches()
     apply_modular_sources()
+    apply_module_patch()
     sanity_check()
-    print("Built dashboard.yaml v0.8.2-alpha from modular sources")
+    print("Built dashboard.yaml v0.8.3-alpha from modular sources")
