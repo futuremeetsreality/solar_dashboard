@@ -2,9 +2,9 @@
 
 [English](README.md) | [Deutsch](README_DE.md)
 
-A responsive solar and battery dashboard for Home Assistant with Power Flux visualization, dynamic MPPT gauges, daily energy values, grid flow, battery status, feed-in revenue, adaptive light/dark styling, bilingual UI support, and dedicated wall-display profiles.
+A responsive solar and battery dashboard for Home Assistant with Power Flux visualization, dynamic MPPT gauges, daily energy values, grid flow, battery status, feed-in revenue, adaptive light/dark styling, bilingual UI support, dedicated wall-display profiles, and configurable dashboard modules.
 
-Current version: **v0.8.3-alpha**
+Current version: **v0.8.4-alpha**
 
 > Alpha means the dashboard is already usable, but configuration, compatibility and UI behavior are still being tested across different Home Assistant installations.
 
@@ -16,7 +16,7 @@ Current version: **v0.8.3-alpha**
 - Four prepared MPPT configuration slots
 - Automatic PV maximum based on all enabled tracker `maxKw` values
 - Dynamic split PV Total bar for all enabled trackers
-- User-configurable module visibility and ordering
+- User-configurable module visibility, order and size
 - Battery, house and grid live values plus daily values
 - `auto`, `de` and `en` dashboard languages
 - Locale-aware number formatting
@@ -39,15 +39,7 @@ Reload Home Assistant or your browser afterwards.
 
 [`dashboard.yaml`](dashboard.yaml) is one complete Lovelace card configuration.
 
-In Home Assistant:
-
-1. Edit the target dashboard.
-2. Add a card.
-3. Select **Manual**.
-4. Paste the complete contents of `dashboard.yaml`.
-5. Save.
-
-Do not paste it directly into the raw configuration editor for the entire dashboard.
+In Home Assistant: edit the target dashboard, add a **Manual** card, paste the complete contents of `dashboard.yaml`, and save.
 
 ## Language
 
@@ -68,29 +60,30 @@ performanceMode: 'auto',
 
 `performanceMode`: `auto`, `high`, `balanced`, `low`
 
-Older Safari/iPadOS versions that do not support `color-mix()` automatically fall back to `low` mode. For an older permanently mounted iPad, start with:
+## Module visibility, order and size
 
-```js
-displayMode: 'wall',
-performanceMode: 'auto',
-```
-
-## Module visibility and order
-
-v0.8.3-alpha adds `CONFIG.modules`:
+Each module is configured with an `id` and a preferred `size`:
 
 ```js
 modules: [
-  'mppt',
-  'pvTotal',
-  'battery',
-  'live',
-  'payment',
-  'runtime'
+  { id: 'mppt',    size: 'max' },
+  { id: 'pvTotal', size: 'large' },
+  { id: 'battery', size: 'large' },
+  { id: 'live',    size: 'max' },
+  { id: 'payment', size: 'large' },
+  { id: 'runtime', size: 'large' }
 ],
 ```
 
-Only listed modules are shown, and the array order is the dashboard order. Remove an ID to hide a module or move it to change its position.
+The array order is the display order. Remove an object to hide that module.
+
+Sizes use a four-column layout:
+
+- `small` — 1 of 4 columns
+- `large` — 2 of 4 columns
+- `max` — full row
+
+On narrow screens the dashboard automatically increases the minimum span where needed for readability. The default configuration keeps `payment` and `runtime` side-by-side on phones by assigning both `large`.
 
 Available module IDs:
 
@@ -101,63 +94,23 @@ Available module IDs:
 - `payment` — today's feed-in revenue/compensation
 - `runtime` — estimated remaining battery runtime
 
-Power Flux is intentionally not part of this list. It remains the separate first Lovelace card.
+Power Flux intentionally remains the separate first Lovelace card.
 
 ## MPPT / tracker configuration
 
-Four tracker slots are prepared in the user configuration. Unused trackers can stay disabled:
+Four tracker slots are prepared in the user configuration. Set `enabled: false` for unused trackers. Disabled trackers do not affect gauges, PV maximum calculation or the PV Total split bar.
 
-```js
-{
-  enabled: false,
-  name: 'MPPT 3',
-  power: '',
-  energyToday: '',
-  maxKw: 0,
-  colorStart: '#2196f3',
-  colorEnd: '#00e5ff'
-}
-```
-
-Set `enabled: true` and configure the entities plus `maxKw` to activate a tracker. Disabled trackers do not affect gauges, PV maximum calculation or the PV Total split bar.
-
-The example configuration included in the repository uses:
-
-- MPPT 1: 9.10 kW
-- MPPT 2: 6.37 kW
-- calculated PV maximum: 15.47 kW
-- battery capacity: 12.50 kWh
+The example configuration uses MPPT 1 = 9.10 kW and MPPT 2 = 6.37 kW, resulting in 15.47 kW calculated PV maximum. Battery capacity is 12.50 kWh.
 
 ## Modular source architecture
 
-`dashboard.yaml` is generated from smaller source modules:
+`dashboard.yaml` is generated from smaller source modules under `src/` via `tools/build_dashboard.py`. GitHub Actions rebuilds the user-facing file automatically whenever source files or build tooling change.
 
-```text
-src/
-├── config.js
-├── i18n.js
-├── layout.js
-├── logic.js
-├── styles.css
-└── README.md
-
-tools/
-└── build_dashboard.py
-```
-
-Local build:
-
-```bash
-python tools/build_dashboard.py
-```
-
-GitHub Actions automatically runs the same builder whenever source files or build tooling change. Normal Home Assistant users still only need `dashboard.yaml`.
-
-The proven legacy V7 base remains temporarily in the v0.8.x build pipeline while sections are migrated into `src/` step by step. This avoids a risky rewrite of a working dashboard.
+Normal Home Assistant users only need `dashboard.yaml`.
 
 ## Sensor mapping
 
-The included SolaX entity IDs are only examples. Other inverter, battery or meter systems can be used as long as the mapped sensors provide the expected measurement.
+The included SolaX entity IDs are examples. Other inverter, battery or meter systems can be used as long as the mapped sensors provide the expected measurement.
 
 See:
 
@@ -167,8 +120,6 @@ See:
 - [Changelog](CHANGELOG.md)
 
 ## Versioning
-
-The project follows semantic pre-release versioning:
 
 - `v0.8.x-alpha` — active feature development and compatibility testing
 - `v0.9.x-beta` — feature-complete testing phase
