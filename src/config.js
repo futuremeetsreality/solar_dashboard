@@ -12,16 +12,26 @@ const SOURCE_CONFIG = {
   performanceMode: 'auto', // auto | high | balanced | low
 
   /*
-   * MODULES: VISIBILITY AND ORDER
-   * MODULE: SICHTBARKEIT UND REIHENFOLGE
+   * MODULES: VISIBILITY, ORDER AND SIZE
+   * MODULE: SICHTBARKEIT, REIHENFOLGE UND GRÖSSE
    *
    * Only modules listed below are shown. The order in this list is also the
-   * display order. Remove an entry to hide that module or move an entry to
+   * display order. Remove an object to hide that module or move an object to
    * change its position.
    *
    * Nur die unten eingetragenen Module werden angezeigt. Die Reihenfolge in
-   * dieser Liste ist zugleich die Anzeigereihenfolge. Einen Eintrag entfernen,
+   * dieser Liste ist zugleich die Anzeigereihenfolge. Einen Block entfernen,
    * um das Modul auszublenden, oder verschieben, um die Position zu ändern.
+   *
+   * size controls the preferred width / size steuert die bevorzugte Breite:
+   * small = 1 of 4 columns / 1 von 4 Spalten
+   * large = 2 of 4 columns / 2 von 4 Spalten
+   * max   = full row / ganze Zeile
+   *
+   * On narrow screens the dashboard automatically increases the minimum width
+   * where necessary so modules stay readable.
+   * Auf schmalen Displays wird die Mindestbreite automatisch vergrößert, damit
+   * die Module lesbar bleiben.
    *
    * Available modules / Verfügbare Module:
    *
@@ -50,29 +60,23 @@ const SOURCE_CONFIG = {
    *   Tagesenergiewerten.
    *
    * 'payment'
-   *   Today's feed-in revenue/compensation. Intended for an optional
-   *   calculated Home Assistant sensor.
-   *   Heutiger Einspeiseerlös bzw. Vergütung. Für einen optionalen
-   *   berechneten Home-Assistant-Sensor gedacht.
+   *   Today's feed-in revenue/compensation.
+   *   Heutiger Einspeiseerlös bzw. Vergütung.
    *
    * 'runtime'
-   *   Estimated remaining battery runtime. The sensor unit is displayed
-   *   automatically; if no unit exists, hours (h) are assumed.
-   *   Geschätzte Batterie-Restlaufzeit. Die Sensoreinheit wird automatisch
-   *   angezeigt; ohne Einheit werden Stunden (h) angenommen.
+   *   Estimated remaining battery runtime.
+   *   Geschätzte Batterie-Restlaufzeit.
    *
-   * Power Flux is intentionally NOT part of this list. It remains the separate
-   * first Lovelace card and is not mixed into the module order.
-   * Power Flux ist absichtlich NICHT Teil dieser Liste. Die Karte bleibt als
-   * separate erste Lovelace-Karte außerhalb der Modul-Reihenfolge.
+   * Power Flux is intentionally NOT part of this list.
+   * Power Flux ist absichtlich NICHT Teil dieser Liste.
    */
   modules: [
-    'mppt',
-    'pvTotal',
-    'battery',
-    'live',
-    'payment',
-    'runtime'
+    { id: 'mppt',    size: 'max' },
+    { id: 'pvTotal', size: 'large' },
+    { id: 'battery', size: 'large' },
+    { id: 'live',    size: 'max' },
+    { id: 'payment', size: 'large' },
+    { id: 'runtime', size: 'large' }
   ],
 
   /*
@@ -87,10 +91,6 @@ const SOURCE_CONFIG = {
    * ergänzt werden. Nicht verwendete Tracker auf enabled: false setzen.
    * Deaktivierte Tracker werden bei Gauges, PV-Maximum und PV-Total-Balken
    * vollständig ignoriert.
-   *
-   * power: current power in W or kW / aktuelle Leistung in W oder kW
-   * energyToday: daily energy in Wh or kWh / Tagesenergie in Wh oder kWh
-   * maxKw: installed DC power assigned to this tracker / zugeordnete Generatorleistung
    */
   trackers: [
     {
