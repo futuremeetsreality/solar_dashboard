@@ -1,4 +1,4 @@
-# solar_dashboard v0.8.2-alpha - dashboard.yaml
+# solar_dashboard v0.8.3-alpha - dashboard.yaml
 # GENERATED FILE - edit src/ and tools/build_dashboard.py instead.
 # GENERIERTE DATEI - Änderungen bitte in src/ und tools/build_dashboard.py vornehmen.
 # Aktualisiert: 2026-08-07 21:25
@@ -194,67 +194,69 @@ cards:
              * Farben sind frei wählbar.
              */
 
+            /*
+             * MODULE VISIBILITY AND ORDER / MODUL-SICHTBARKEIT UND REIHENFOLGE
+             *
+             * Available / Verfügbar:
+             * mppt    = tracker gauges / Tracker-Gauges
+             * pvTotal = total PV + tracker split bar / PV Gesamt + Tracker-Balken
+             * battery = SoC, remaining energy, power/status / SoC, Restenergie, Leistung/Status
+             * live    = PV, house, grid, battery live overview / PV-, Haus-, Netz-, Batterie-Liveübersicht
+             * payment = today's feed-in revenue / heutiger Einspeiseerlös
+             * runtime = estimated battery runtime / geschätzte Batterie-Restlaufzeit
+             *
+             * Remove an ID to hide a module. Reorder IDs to change display order.
+             * ID entfernen = Modul ausblenden. IDs verschieben = Reihenfolge ändern.
+             * Power Flux remains the separate first Lovelace card.
+             * Power Flux bleibt die separate erste Lovelace-Karte.
+             */
+            modules: [
+    'mppt',
+    'pvTotal',
+    'battery',
+    'live',
+    'payment',
+    'runtime'
+  ],
+
             trackers: [
-              {
-                // Tracker 1 / String 1
-                name: 'MPPT 1',
-
-                // [PFLICHT] Aktuelle Leistung dieses PV-Trackers.
-                // Messwert: momentane elektrische Leistung.
-                // Einheit: W oder kW.
-                power:
-                  'sensor.solax_inverter_pv_power_1',
-
-                // [PFLICHT] Heute erzeugte Energie dieses Trackers.
-                // Messwert: seit Mitternacht aufsummierter PV-Ertrag.
-                // Einheit: Wh oder kWh.
-                energyToday:
-                  'sensor.technikraum_solax_inverter_mppt_1_tageszahler',
-
-                // Maximale/zugeordnete Generatorleistung dieses Trackers.
-                // Einheit: kW.
-                maxKw: 9.10,
-
-                // Farbe des Halbkreis-Gauges und PV-Segments.
-                colorStart: '#ff9800',
-                colorEnd: '#ffd740'
-              },
-
-              {
-                // Tracker 2 / String 2
-                name: 'MPPT 2',
-
-                // [PFLICHT] Aktuelle Leistung dieses PV-Trackers.
-                // Einheit: W oder kW.
-                power:
-                  'sensor.solax_inverter_pv_power_2',
-
-                // [PFLICHT] Heute erzeugte Energie dieses Trackers.
-                // Einheit: Wh oder kWh.
-                energyToday:
-                  'sensor.technikraum_solax_inverter_mppt_2_tageszahler',
-
-                // Maximale/zugeordnete Generatorleistung dieses Trackers.
-                // Einheit: kW.
-                maxKw: 6.37,
-
-                colorStart: '#43a047',
-                colorEnd: '#76ff7a'
-              }
-
-              /*
-               * Beispiel MPPT 3:
-               *
-               * ,{
-               *   name: 'MPPT 3',
-               *   power: 'sensor.mein_mppt_3_power',
-               *   energyToday: 'sensor.mein_mppt_3_energy_today',
-               *   maxKw: 5.00,
-               *   colorStart: '#2196f3',
-               *   colorEnd: '#00e5ff'
-               * }
-               */
-            ],
+    {
+      enabled: true,
+      name: 'MPPT 1',
+      power: 'sensor.solax_inverter_pv_power_1',
+      energyToday: 'sensor.technikraum_solax_inverter_mppt_1_tageszahler',
+      maxKw: 9.10,
+      colorStart: '#ff9800',
+      colorEnd: '#ffd740'
+    },
+    {
+      enabled: true,
+      name: 'MPPT 2',
+      power: 'sensor.solax_inverter_pv_power_2',
+      energyToday: 'sensor.technikraum_solax_inverter_mppt_2_tageszahler',
+      maxKw: 6.37,
+      colorStart: '#43a047',
+      colorEnd: '#76ff7a'
+    },
+    {
+      enabled: false,
+      name: 'MPPT 3',
+      power: '',
+      energyToday: '',
+      maxKw: 0,
+      colorStart: '#2196f3',
+      colorEnd: '#00e5ff'
+    },
+    {
+      enabled: false,
+      name: 'MPPT 4',
+      power: '',
+      energyToday: '',
+      maxKw: 0,
+      colorStart: '#ab47bc',
+      colorEnd: '#e040fb'
+    }
+  ],
 
             entities: {
 
@@ -869,6 +871,7 @@ cards:
           const trackers = CONFIG.trackers
             .filter((tracker) =>
               tracker &&
+              tracker.enabled !== false &&
               tracker.power &&
               Number(tracker.maxKw) > 0
             )
@@ -1063,20 +1066,56 @@ cards:
 
           /*
            * ========================================================
+           * MODULE VISIBILITY / ORDER
+           * MODUL-SICHTBARKEIT / REIHENFOLGE
+           * ========================================================
+           */
+
+          const availableModules = [
+            'mppt',
+            'pvTotal',
+            'battery',
+            'live',
+            'payment',
+            'runtime'
+          ];
+
+          const configuredModules = Array.from(
+            new Set(
+              (Array.isArray(CONFIG.modules)
+                ? CONFIG.modules
+                : availableModules
+              ).filter((moduleId) => availableModules.includes(moduleId))
+            )
+          );
+
+          const moduleEnabled = (moduleId) =>
+            configuredModules.includes(moduleId);
+
+          const moduleOrder = (moduleId) => {
+            const index = configuredModules.indexOf(moduleId);
+            return index >= 0 ? index : 999;
+          };
+
+          const moduleClass = (moduleId) =>
+            moduleEnabled(moduleId) ? '' : ' module-hidden';
+
+          /*
+           * ========================================================
            * OUTPUT / AUSGABE
            * ========================================================
            */
 
           return `
-            <div class="solar-dashboard display-${displayMode} perf-${performanceMode}">
+            <div class="solar-dashboard modules-custom display-${displayMode} perf-${performanceMode}">
 
               <!-- =============================================== -->
               <!-- MPPT / TRACKER – DYNAMISCH -->
               <!-- =============================================== -->
 
               <div
-                class="mppt-grid"
-                style="--mppt-count:${Math.max(trackers.length, 1)};"
+                class="mppt-grid module-item module-mppt${moduleClass('mppt')}"
+                style="--mppt-count:${Math.max(trackers.length, 1)}; --module-order:${moduleOrder('mppt')};"
               >
                 ${mpptCardsHtml}
               </div>
@@ -1085,7 +1124,7 @@ cards:
               <!-- LIVE ENERGY FLOW / LIVE-ENERGIEFLUSS -->
               <!-- =============================================== -->
 
-              <div class="panel live-panel">
+              <div class="panel live-panel module-item module-live${moduleClass('live')}" style="--module-order:${moduleOrder('live')};">
 
                 <div class="live-grid">
 
@@ -1227,7 +1266,7 @@ cards:
               <!-- PV TOTAL – V5 QUERBALKEN -->
               <!-- =============================================== -->
 
-              <div class="panel pv-total-panel v5-bar-panel">
+              <div class="panel pv-total-panel v5-bar-panel module-item module-pv-total${moduleClass('pvTotal')}" style="--module-order:${moduleOrder('pvTotal')};">
 
                 <div class="v5-bar-header centered-header">
 
@@ -1270,7 +1309,7 @@ cards:
               <!-- BATTERIE – V5 QUERBALKEN -->
               <!-- =============================================== -->
 
-              <div class="panel battery-panel v5-bar-panel">
+              <div class="panel battery-panel v5-bar-panel module-item module-battery${moduleClass('battery')}" style="--module-order:${moduleOrder('battery')};">
 
                 <div class="v5-bar-header centered-header">
 
@@ -1330,7 +1369,7 @@ cards:
               <!-- VERGÜTUNG -->
               <!-- =============================================== -->
 
-              <div class="panel information-panel payment-panel">
+              <div class="panel information-panel payment-panel module-item module-payment${moduleClass('payment')}" style="--module-order:${moduleOrder('payment')};">
 
                 <ha-icon
                   icon="mdi:transmission-tower-export"
@@ -1362,7 +1401,7 @@ cards:
               <!-- RESTLAUFZEIT -->
               <!-- =============================================== -->
 
-              <div class="panel information-panel runtime-panel">
+              <div class="panel information-panel runtime-panel module-item module-runtime${moduleClass('runtime')}" style="--module-order:${moduleOrder('runtime')};">
 
                 <ha-icon
                   icon="mdi:battery-clock-outline"
@@ -1405,6 +1444,51 @@ cards:
           - width: 100%
           - overflow: visible
     extra_styles: |
+      /*
+       * ==========================================================
+       * v0.8.3-alpha MODULE ORDER / MODULE REIHENFOLGE
+       * ==========================================================
+       */
+
+      .solar-dashboard.modules-custom {
+        grid-template-areas: none !important;
+        grid-auto-flow: row dense;
+      }
+
+      .solar-dashboard.modules-custom > .module-item {
+        grid-area: auto !important;
+        order: var(--module-order, 0);
+      }
+
+      .solar-dashboard.modules-custom > .module-mppt,
+      .solar-dashboard.modules-custom > .module-live {
+        grid-column: 1 / -1 !important;
+      }
+
+      .solar-dashboard.modules-custom > .module-pv-total,
+      .solar-dashboard.modules-custom > .module-battery,
+      .solar-dashboard.modules-custom > .module-payment,
+      .solar-dashboard.modules-custom > .module-runtime {
+        grid-column: span 1 !important;
+      }
+
+      .solar-dashboard.modules-custom > .module-hidden {
+        display: none !important;
+      }
+
+      @media screen and (max-width: 699px) {
+        .solar-dashboard.modules-custom {
+          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        }
+      }
+
+      @media screen and (min-width: 700px) {
+        .solar-dashboard.modules-custom.display-wall {
+          grid-template-areas: none !important;
+          grid-auto-flow: row dense !important;
+        }
+      }
+
       /*
        * v0.8.2-alpha - display/performance compatibility layer
        * v0.8.2-alpha - Display-/Performance-Kompatibilität
