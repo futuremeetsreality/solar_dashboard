@@ -38,5 +38,5 @@ jobs:
             echo "dashboard.yaml is already up to date"
             exit 0
           fi
-          git commit -m "Generate dashboard.yaml v0.8.3-alpha"
+          git commit -m "Generate dashboard.yaml v0.8.4-alpha"
           git push
