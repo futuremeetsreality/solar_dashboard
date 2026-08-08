@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # File: tools/apply_modules_v0_8_3.py
-# Timestamp: 2026-08-08 08:05 +0200
+# Timestamp: 2026-08-08 08:04 +0200
 
 """Apply v0.8.3-alpha configurable module visibility/order.
 
@@ -57,6 +57,26 @@ def extract_array(text: str, key: str) -> str:
     raise SystemExit(f"Unclosed array {key} in src/config.js")
 
 
+def indent_array_for_yaml_block(array_source: str, base_spaces: int = 12) -> str:
+    """Indent continuation lines so JS stays inside the YAML block scalar.
+
+    The first '[' is inserted after e.g. ``modules: `` and therefore already has
+    the correct YAML indentation. Every following line must remain indented deeper
+    than ``dashboard: |``; otherwise Home Assistant sees the JavaScript as YAML and
+    reports errors such as "No card type configured".
+
+    Fortsetzungszeilen werden so eingerückt, dass das JavaScript innerhalb des
+    YAML-Block-Scalars bleibt. Andernfalls interpretiert Home Assistant Teile davon
+    als YAML und meldet z. B. "No card type configured".
+    """
+    lines = array_source.splitlines()
+    if len(lines) <= 1:
+        return array_source
+
+    prefix = " " * base_spaces
+    return lines[0] + "\n" + "\n".join(prefix + line for line in lines[1:])
+
+
 def replace_js_array(text: str, key: str, array_source: str, occurrence: int = 1) -> str:
     """Replace the nth JS array assigned to key while respecting nested brackets."""
     matches = list(re.finditer(rf"\b{re.escape(key)}\s*:\s*\[", text))
@@ -105,8 +125,10 @@ def main() -> None:
         count=1,
     )
 
-    modules_array = extract_array(config_source, "modules")
-    trackers_array = extract_array(config_source, "trackers")
+    # Source arrays must be re-indented before being embedded into the YAML literal
+    # block. / Quell-Arrays müssen vor dem Einbetten in den YAML-Block eingerückt werden.
+    modules_array = indent_array_for_yaml_block(extract_array(config_source, "modules"))
+    trackers_array = indent_array_for_yaml_block(extract_array(config_source, "trackers"))
 
     # Inject the module list immediately before trackers in the generated CONFIG.
     # Modulliste direkt vor trackers in CONFIG einfügen.
@@ -265,26 +287,21 @@ def main() -> None:
       }
 
       @media screen and (max-width: 699px) {
-        .solar-dashboard.modules-custom {
-          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-        }
-      }
-
-      @media screen and (min-width: 700px) {
-        .solar-dashboard.modules-custom.display-wall {
-          grid-template-areas: none !important;
-          grid-auto-flow: row dense !important;
+        .solar-dashboard.modules-custom > .module-pv-total,
+        .solar-dashboard.modules-custom > .module-battery,
+        .solar-dashboard.modules-custom > .module-payment,
+        .solar-dashboard.modules-custom > .module-runtime {
+          grid-column: 1 / -1 !important;
         }
       }
 
 '''
     if "v0.8.3-alpha MODULE ORDER" not in text:
         if css_marker not in text:
-            raise SystemExit("extra_styles marker not found")
+            raise SystemExit("extra_styles block not found")
         text = text.replace(css_marker, css_marker + module_css, 1)
 
     DASHBOARD.write_text(text, encoding="utf-8")
-    print("Applied v0.8.3-alpha module visibility/order and four MPPT slots")
 
 
 if __name__ == "__main__":
