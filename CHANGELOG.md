@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.8.3-alpha - 2026-08-08
+
+- Added configurable dashboard module visibility and ordering through `CONFIG.modules`.
+- Supported module IDs: `mppt`, `pvTotal`, `battery`, `live`, `payment`, `runtime`.
+- Removing a module ID hides that module; changing the list order changes its dashboard position.
+- Power Flux intentionally remains the separate first Lovelace card and is not part of the internal module ordering.
+- Added bilingual EN/DE descriptions in the user configuration explaining every available module and what it displays.
+- Added four prepared MPPT tracker slots.
+- MPPT 1 and MPPT 2 remain enabled with the example SolaX configuration.
+- MPPT 3 and MPPT 4 are prepared but disabled by default.
+- Added `enabled` per tracker. Disabled trackers are ignored by MPPT gauges, PV maximum calculation and the PV Total split bar.
+- Unknown module IDs and duplicate module IDs are ignored safely.
+- Added automatic grid placement so full-width modules (`mppt`, `live`) and compact modules can be reordered without fixed grid-template areas.
+
 ## v0.8.2-alpha - 2026-08-07
 
 - Introduced a modular source architecture under `src/`.
@@ -77,16 +91,3 @@
 - PV-Gesamtmaximum wird nicht mehr separat gepflegt, sondern aus der Summe aller `maxKw`-Werte berechnet.
 - Beispielkonfiguration weiterhin mit 9,10 kW für MPPT 1 und 6,37 kW für MPPT 2; daraus ergeben sich automatisch 15,47 kW PV max.
 - V6-Sensorstruktur für Haus, Netz und Batterie beibehalten.
-
-## V6 - 2026-08-07
-
-- Benutzerkonfiguration für alle Haupt-Entities zentralisiert.
-- Jeder Sensor direkt im Code dokumentiert.
-- MPPT-Maximalwerte getrennt konfigurierbar.
-- MPPT 1: 9,10 kW Beispielwert.
-- MPPT 2: 6,37 kW Beispielwert.
-- PV-Gesamtmaximum: 15,47 kW Beispielwert.
-- Batterie: 12,50 kWh Beispielwert.
-- `triggers_update: all`, damit Entity-IDs nicht zusätzlich in einer Triggerliste gepflegt werden müssen.
-- Optionaler Haus-Tagesverbrauch mit Fallback auf Energiebilanz.
-- V5.2-Layout beibehalten.
