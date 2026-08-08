@@ -4,7 +4,7 @@
 
 A responsive solar and battery dashboard for Home Assistant with Power Flux visualization, dynamic MPPT gauges, daily energy values, grid flow, battery status, feed-in revenue, adaptive light/dark styling, bilingual UI support, and dedicated wall-display profiles.
 
-Current version: **v0.8.2-alpha**
+Current version: **v0.8.3-alpha**
 
 > Alpha means the dashboard is already usable, but configuration, compatibility and UI behavior are still being tested across different Home Assistant installations.
 
@@ -13,8 +13,10 @@ Current version: **v0.8.2-alpha**
 - Automatic Home Assistant light/dark mode support
 - Adaptive glows and gradients in both modes
 - Dynamic support for 1, 2, 3 or more MPPT/PV trackers
-- Automatic PV maximum based on all tracker `maxKw` values
-- Dynamic split PV Total bar for all configured trackers
+- Four prepared MPPT configuration slots
+- Automatic PV maximum based on all enabled tracker `maxKw` values
+- Dynamic split PV Total bar for all enabled trackers
+- User-configurable module visibility and ordering
 - Battery, house and grid live values plus daily values
 - `auto`, `de` and `en` dashboard languages
 - Locale-aware number formatting
@@ -49,19 +51,11 @@ Do not paste it directly into the raw configuration editor for the entire dashbo
 
 ## Language
 
-Inside the `custom:button-card` configuration, set:
-
 ```js
 language: 'auto',
 ```
 
-Supported values:
-
-- `auto` — follows the Home Assistant language; German is detected as `de`, everything else currently falls back to English
-- `de` — force German
-- `en` — force English
-
-Number formatting follows the selected language as well.
+Supported values: `auto`, `de`, `en`. Number formatting follows the selected language.
 
 ## Display and performance profiles
 
@@ -70,9 +64,9 @@ displayMode: 'auto',
 performanceMode: 'auto',
 ```
 
-`displayMode` supports `auto`, `desktop`, `tablet` and `wall`.
+`displayMode`: `auto`, `desktop`, `tablet`, `wall`
 
-`performanceMode` supports `auto`, `high`, `balanced` and `low`.
+`performanceMode`: `auto`, `high`, `balanced`, `low`
 
 Older Safari/iPadOS versions that do not support `color-mix()` automatically fall back to `low` mode. For an older permanently mounted iPad, start with:
 
@@ -81,34 +75,53 @@ displayMode: 'wall',
 performanceMode: 'auto',
 ```
 
-## MPPT / tracker configuration
+## Module visibility and order
 
-Trackers are configured in `CONFIG.trackers`:
+v0.8.3-alpha adds `CONFIG.modules`:
 
 ```js
-trackers: [
-  {
-    name: 'MPPT 1',
-    power: 'sensor.my_mppt_1_power',
-    energyToday: 'sensor.my_mppt_1_energy_today',
-    maxKw: 9.10,
-    colorStart: '#ff9800',
-    colorEnd: '#ffd740'
-  },
-  {
-    name: 'MPPT 2',
-    power: 'sensor.my_mppt_2_power',
-    energyToday: 'sensor.my_mppt_2_energy_today',
-    maxKw: 6.37,
-    colorStart: '#43a047',
-    colorEnd: '#76ff7a'
-  }
-]
+modules: [
+  'mppt',
+  'pvTotal',
+  'battery',
+  'live',
+  'payment',
+  'runtime'
+],
 ```
 
-Use one object for one tracker, add more objects for additional trackers. The grid, gauges and PV Total bar adapt automatically.
+Only listed modules are shown, and the array order is the dashboard order. Remove an ID to hide a module or move it to change its position.
 
-## Example configuration included in the repository
+Available module IDs:
+
+- `mppt` — tracker gauges with current power, daily production and configured maximum
+- `pvTotal` — total PV power, PV percentage and tracker-split production bar
+- `battery` — SoC, remaining battery energy, current battery power and status
+- `live` — compact PV/house/grid/battery live overview with daily energy values
+- `payment` — today's feed-in revenue/compensation
+- `runtime` — estimated remaining battery runtime
+
+Power Flux is intentionally not part of this list. It remains the separate first Lovelace card.
+
+## MPPT / tracker configuration
+
+Four tracker slots are prepared in the user configuration. Unused trackers can stay disabled:
+
+```js
+{
+  enabled: false,
+  name: 'MPPT 3',
+  power: '',
+  energyToday: '',
+  maxKw: 0,
+  colorStart: '#2196f3',
+  colorEnd: '#00e5ff'
+}
+```
+
+Set `enabled: true` and configure the entities plus `maxKw` to activate a tracker. Disabled trackers do not affect gauges, PV maximum calculation or the PV Total split bar.
+
+The example configuration included in the repository uses:
 
 - MPPT 1: 9.10 kW
 - MPPT 2: 6.37 kW
@@ -117,7 +130,7 @@ Use one object for one tracker, add more objects for additional trackers. The gr
 
 ## Modular source architecture
 
-Starting with **v0.8.2-alpha**, `dashboard.yaml` is generated from smaller source modules:
+`dashboard.yaml` is generated from smaller source modules:
 
 ```text
 src/
