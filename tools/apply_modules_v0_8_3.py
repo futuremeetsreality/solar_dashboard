@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 # File: tools/apply_modules_v0_8_3.py
-# Timestamp: 2026-08-08 08:04 +0200
+# Timestamp: 2026-08-08 08:14 +0200
 
-"""Apply v0.8.3-alpha configurable module visibility/order.
+"""Apply v0.8.4-alpha configurable module visibility/order/size.
 
-The user controls modules from CONFIG.modules. Only known module IDs are accepted.
-Power Flux intentionally stays outside this system as the separate first Lovelace card.
+CONFIG.modules accepts objects with id + size. Supported sizes are small, large,
+and max. Power Flux intentionally stays outside this system.
 
-Der Benutzer steuert die Module über CONFIG.modules. Es werden nur bekannte Modul-IDs
-akzeptiert. Power Flux bleibt absichtlich außerhalb dieses Systems als separate erste
-Lovelace-Karte.
+CONFIG.modules akzeptiert Objekte mit id + size. Unterstützt werden small, large
+und max. Power Flux bleibt absichtlich außerhalb dieses Systems.
 """
 
 from __future__ import annotations
@@ -23,16 +22,13 @@ SOURCE_CONFIG = ROOT / "src" / "config.js"
 
 
 def extract_array(text: str, key: str) -> str:
-    """Return the complete JS array expression assigned to key."""
     match = re.search(rf"\b{re.escape(key)}\s*:\s*\[", text)
     if not match:
         raise SystemExit(f"Could not find array {key} in src/config.js")
-
     start = text.find("[", match.start())
     depth = 0
     quote = None
     escaped = False
-
     for i in range(start, len(text)):
         ch = text[i]
         if quote:
@@ -43,7 +39,6 @@ def extract_array(text: str, key: str) -> str:
             elif ch == quote:
                 quote = None
             continue
-
         if ch in ("'", '"', "`"):
             quote = ch
             continue
@@ -52,43 +47,27 @@ def extract_array(text: str, key: str) -> str:
         elif ch == "]":
             depth -= 1
             if depth == 0:
-                return text[start : i + 1]
-
+                return text[start:i + 1]
     raise SystemExit(f"Unclosed array {key} in src/config.js")
 
 
 def indent_array_for_yaml_block(array_source: str, base_spaces: int = 12) -> str:
-    """Indent continuation lines so JS stays inside the YAML block scalar.
-
-    The first '[' is inserted after e.g. ``modules: `` and therefore already has
-    the correct YAML indentation. Every following line must remain indented deeper
-    than ``dashboard: |``; otherwise Home Assistant sees the JavaScript as YAML and
-    reports errors such as "No card type configured".
-
-    Fortsetzungszeilen werden so eingerückt, dass das JavaScript innerhalb des
-    YAML-Block-Scalars bleibt. Andernfalls interpretiert Home Assistant Teile davon
-    als YAML und meldet z. B. "No card type configured".
-    """
     lines = array_source.splitlines()
     if len(lines) <= 1:
         return array_source
-
     prefix = " " * base_spaces
     return lines[0] + "\n" + "\n".join(prefix + line for line in lines[1:])
 
 
 def replace_js_array(text: str, key: str, array_source: str, occurrence: int = 1) -> str:
-    """Replace the nth JS array assigned to key while respecting nested brackets."""
     matches = list(re.finditer(rf"\b{re.escape(key)}\s*:\s*\[", text))
     if len(matches) < occurrence:
         raise SystemExit(f"Could not find target array {key} occurrence {occurrence}")
-
     match = matches[occurrence - 1]
     start = text.find("[", match.start())
     depth = 0
     quote = None
     escaped = False
-
     for i in range(start, len(text)):
         ch = text[i]
         if quote:
@@ -99,7 +78,6 @@ def replace_js_array(text: str, key: str, array_source: str, occurrence: int = 1
             elif ch == quote:
                 quote = None
             continue
-
         if ch in ("'", '"', "`"):
             quote = ch
             continue
@@ -108,8 +86,7 @@ def replace_js_array(text: str, key: str, array_source: str, occurrence: int = 1
         elif ch == "]":
             depth -= 1
             if depth == 0:
-                return text[:start] + array_source + text[i + 1 :]
-
+                return text[:start] + array_source + text[i + 1:]
     raise SystemExit(f"Unclosed target array {key}")
 
 
@@ -117,21 +94,16 @@ def main() -> None:
     text = DASHBOARD.read_text(encoding="utf-8")
     config_source = SOURCE_CONFIG.read_text(encoding="utf-8")
 
-    # Version / Version
     text = re.sub(
         r"# solar_dashboard .*? - dashboard\.yaml",
-        "# solar_dashboard v0.8.3-alpha - dashboard.yaml",
+        "# solar_dashboard v0.8.4-alpha - dashboard.yaml",
         text,
         count=1,
     )
 
-    # Source arrays must be re-indented before being embedded into the YAML literal
-    # block. / Quell-Arrays müssen vor dem Einbetten in den YAML-Block eingerückt werden.
     modules_array = indent_array_for_yaml_block(extract_array(config_source, "modules"))
     trackers_array = indent_array_for_yaml_block(extract_array(config_source, "trackers"))
 
-    # Inject the module list immediately before trackers in the generated CONFIG.
-    # Modulliste direkt vor trackers in CONFIG einfügen.
     if "modules: [" not in text:
         marker = "            trackers: ["
         pos = text.find(marker)
@@ -139,20 +111,14 @@ def main() -> None:
             raise SystemExit("Generated CONFIG.trackers not found")
         modules_block = (
             "            /*\n"
-            "             * MODULE VISIBILITY AND ORDER / MODUL-SICHTBARKEIT UND REIHENFOLGE\n"
+            "             * MODULE VISIBILITY, ORDER AND SIZE / MODUL-SICHTBARKEIT, REIHENFOLGE UND GRÖSSE\n"
             "             *\n"
-            "             * Available / Verfügbar:\n"
-            "             * mppt    = tracker gauges / Tracker-Gauges\n"
-            "             * pvTotal = total PV + tracker split bar / PV Gesamt + Tracker-Balken\n"
-            "             * battery = SoC, remaining energy, power/status / SoC, Restenergie, Leistung/Status\n"
-            "             * live    = PV, house, grid, battery live overview / PV-, Haus-, Netz-, Batterie-Liveübersicht\n"
-            "             * payment = today's feed-in revenue / heutiger Einspeiseerlös\n"
-            "             * runtime = estimated battery runtime / geschätzte Batterie-Restlaufzeit\n"
-            "             *\n"
-            "             * Remove an ID to hide a module. Reorder IDs to change display order.\n"
-            "             * ID entfernen = Modul ausblenden. IDs verschieben = Reihenfolge ändern.\n"
+            "             * id: mppt | pvTotal | battery | live | payment | runtime\n"
+            "             * size: small = 1/4, large = 1/2, max = full row\n"
+            "             * size: small = 1/4, large = 1/2, max = ganze Zeile\n"
+            "             * Remove an object to hide the module. Reorder objects to change display order.\n"
+            "             * Block entfernen = Modul ausblenden. Blöcke verschieben = Reihenfolge ändern.\n"
             "             * Power Flux remains the separate first Lovelace card.\n"
-            "             * Power Flux bleibt die separate erste Lovelace-Karte.\n"
             "             */\n"
             f"            modules: {modules_array},\n\n"
         )
@@ -160,11 +126,8 @@ def main() -> None:
     else:
         text = replace_js_array(text, "modules", modules_array)
 
-    # Replace the generated tracker list with the four prepared source slots.
-    # Generierte Tracker-Liste durch die vier vorbereiteten Quell-Slots ersetzen.
     text = replace_js_array(text, "trackers", trackers_array)
 
-    # Disabled trackers must not contribute to gauges, totals or split bars.
     old_filter = """            .filter((tracker) =>
               tracker &&
               tracker.power &&
@@ -176,56 +139,71 @@ def main() -> None:
               tracker.power &&
               Number(tracker.maxKw) > 0
             )"""
-    if old_filter not in text:
-        raise SystemExit("Tracker filter block not found")
-    text = text.replace(old_filter, new_filter, 1)
+    if old_filter in text:
+        text = text.replace(old_filter, new_filter, 1)
 
-    # Module resolver. Unknown IDs and duplicates are ignored safely.
-    # Modul-Resolver. Unbekannte IDs und Duplikate werden sicher ignoriert.
     resolver_marker = "          /*\n           * ========================================================\n           * OUTPUT / AUSGABE"
     resolver = r'''          /*
            * ========================================================
-           * MODULE VISIBILITY / ORDER
-           * MODUL-SICHTBARKEIT / REIHENFOLGE
+           * MODULE VISIBILITY / ORDER / SIZE
+           * MODUL-SICHTBARKEIT / REIHENFOLGE / GRÖSSE
            * ========================================================
            */
 
           const availableModules = [
-            'mppt',
-            'pvTotal',
-            'battery',
-            'live',
-            'payment',
-            'runtime'
+            'mppt', 'pvTotal', 'battery', 'live', 'payment', 'runtime'
           ];
+          const validModuleSizes = ['small', 'large', 'max'];
 
-          const configuredModules = Array.from(
-            new Set(
-              (Array.isArray(CONFIG.modules)
-                ? CONFIG.modules
-                : availableModules
-              ).filter((moduleId) => availableModules.includes(moduleId))
+          const configuredModules = (Array.isArray(CONFIG.modules)
+            ? CONFIG.modules
+            : availableModules.map((id) => ({ id, size: 'max' })))
+            .map((entry) =>
+              typeof entry === 'string'
+                ? { id: entry, size: 'max' }
+                : entry
             )
-          );
+            .filter((entry) => entry && availableModules.includes(entry.id))
+            .filter((entry, index, array) =>
+              array.findIndex((candidate) => candidate.id === entry.id) === index
+            )
+            .map((entry) => ({
+              id: entry.id,
+              size: validModuleSizes.includes(entry.size) ? entry.size : 'large'
+            }));
 
-          const moduleEnabled = (moduleId) =>
-            configuredModules.includes(moduleId);
+          const moduleConfig = (moduleId) =>
+            configuredModules.find((entry) => entry.id === moduleId);
+
+          const moduleEnabled = (moduleId) => Boolean(moduleConfig(moduleId));
 
           const moduleOrder = (moduleId) => {
-            const index = configuredModules.indexOf(moduleId);
+            const index = configuredModules.findIndex((entry) => entry.id === moduleId);
             return index >= 0 ? index : 999;
           };
 
+          const moduleSize = (moduleId) =>
+            moduleConfig(moduleId)?.size || 'large';
+
           const moduleClass = (moduleId) =>
-            moduleEnabled(moduleId) ? '' : ' module-hidden';
+            moduleEnabled(moduleId)
+              ? ` module-size-${moduleSize(moduleId)}`
+              : ' module-hidden';
 
 '''
-    if "const availableModules = [" not in text:
-        if resolver_marker not in text:
-            raise SystemExit("Output marker not found")
+
+    existing_resolver = re.search(
+        r"          /\*\n           \* ========================================================\n"
+        r"           \* MODULE VISIBILITY / ORDER.*?"
+        r"          const moduleClass = \(moduleId\) =>.*?;\n\n",
+        text,
+        re.S,
+    )
+    if existing_resolver:
+        text = text[:existing_resolver.start()] + resolver + text[existing_resolver.end():]
+    elif resolver_marker in text:
         text = text.replace(resolver_marker, resolver + resolver_marker, 1)
 
-    # Make the root use auto-placement instead of fixed grid-template-areas.
     text = text.replace(
         '<div class="solar-dashboard display-${displayMode} perf-${performanceMode}">',
         '<div class="solar-dashboard modules-custom display-${displayMode} perf-${performanceMode}">',
@@ -247,21 +225,19 @@ def main() -> None:
             'class="panel information-panel runtime-panel module-item module-runtime${moduleClass(\'runtime\')}" style="--module-order:${moduleOrder(\'runtime\')};"',
     }
     for old, new in wrapper_replacements.items():
-        if old not in text:
-            raise SystemExit(f"Module wrapper not found: {old[:45]}")
-        text = text.replace(old, new, 1)
+        if old in text:
+            text = text.replace(old, new, 1)
 
-    # CSS grid auto-placement. Full-width modules span both columns, compact modules pair naturally.
-    # CSS-Raster mit Auto-Platzierung. Breite Module belegen beide Spalten, kompakte Module paaren sich automatisch.
     css_marker = "    extra_styles: |\n"
     module_css = r'''      /*
        * ==========================================================
-       * v0.8.3-alpha MODULE ORDER / MODULE REIHENFOLGE
+       * v0.8.4-alpha MODULE SIZE / MODULGRÖSSE
        * ==========================================================
        */
 
       .solar-dashboard.modules-custom {
         grid-template-areas: none !important;
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
         grid-auto-flow: row dense;
       }
 
@@ -270,16 +246,16 @@ def main() -> None:
         order: var(--module-order, 0);
       }
 
-      .solar-dashboard.modules-custom > .module-mppt,
-      .solar-dashboard.modules-custom > .module-live {
-        grid-column: 1 / -1 !important;
+      .solar-dashboard.modules-custom > .module-size-small {
+        grid-column: span 1 !important;
       }
 
-      .solar-dashboard.modules-custom > .module-pv-total,
-      .solar-dashboard.modules-custom > .module-battery,
-      .solar-dashboard.modules-custom > .module-payment,
-      .solar-dashboard.modules-custom > .module-runtime {
-        grid-column: span 1 !important;
+      .solar-dashboard.modules-custom > .module-size-large {
+        grid-column: span 2 !important;
+      }
+
+      .solar-dashboard.modules-custom > .module-size-max {
+        grid-column: 1 / -1 !important;
       }
 
       .solar-dashboard.modules-custom > .module-hidden {
@@ -287,16 +263,34 @@ def main() -> None:
       }
 
       @media screen and (max-width: 699px) {
-        .solar-dashboard.modules-custom > .module-pv-total,
-        .solar-dashboard.modules-custom > .module-battery,
-        .solar-dashboard.modules-custom > .module-payment,
-        .solar-dashboard.modules-custom > .module-runtime {
+        .solar-dashboard.modules-custom > .module-size-small,
+        .solar-dashboard.modules-custom > .module-size-large {
+          grid-column: span 2 !important;
+        }
+
+        .solar-dashboard.modules-custom > .module-size-max {
           grid-column: 1 / -1 !important;
         }
       }
 
+      @media screen and (max-width: 420px) {
+        .solar-dashboard.modules-custom > .module-size-small {
+          grid-column: span 2 !important;
+        }
+      }
+
 '''
-    if "v0.8.3-alpha MODULE ORDER" not in text:
+
+    old_css = re.search(
+        r"      /\*\n       \* ==========================================================\n"
+        r"       \* v0\.8\.3-alpha MODULE ORDER.*?"
+        r"(?=      /\*\n       \* ==========================================================)",
+        text,
+        re.S,
+    )
+    if old_css:
+        text = text[:old_css.start()] + module_css + text[old_css.end():]
+    elif "v0.8.4-alpha MODULE SIZE" not in text:
         if css_marker not in text:
             raise SystemExit("extra_styles block not found")
         text = text.replace(css_marker, css_marker + module_css, 1)
