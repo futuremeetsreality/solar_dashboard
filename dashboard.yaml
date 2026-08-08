@@ -211,12 +211,12 @@ cards:
              * Power Flux bleibt die separate erste Lovelace-Karte.
              */
             modules: [
-                'mppt',
-                'pvTotal',
-                'battery',
-                'live',
-                'payment',
-                'runtime'
+                { id: 'mppt',    size: 'max' },
+                { id: 'pvTotal', size: 'large' },
+                { id: 'battery', size: 'large' },
+                { id: 'live',    size: 'max' },
+                { id: 'payment', size: 'large' },
+                { id: 'runtime', size: 'large' }
               ],
 
             trackers: [
