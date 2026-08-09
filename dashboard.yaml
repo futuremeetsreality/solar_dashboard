@@ -1,4 +1,4 @@
-# solar_dashboard v0.8.4-alpha - dashboard.yaml
+# solar_dashboard v0.8.5-alpha - dashboard.yaml
 # GENERATED FILE - edit src/ and tools/build_dashboard.py instead.
 # GENERIERTE DATEI - Änderungen bitte in src/ und tools/build_dashboard.py vornehmen.
 # Aktualisiert: 2026-08-07 21:25
@@ -907,6 +907,9 @@ cards:
                 maxKw,
                 power,
                 energyToday,
+                currentPercent: maxKw > 0
+                  ? Math.min(Math.max((power / maxKw) * 100, 0), 999)
+                  : 0,
                 colorStart,
                 colorEnd,
                 gauge
@@ -987,25 +990,18 @@ cards:
 
                 <div class="mppt-daily-box">
 
-                  <ha-icon
-                    icon="mdi:lightning-bolt"
-                  ></ha-icon>
+                  <div class="mppt-percent">
+                    <ha-icon icon="mdi:lightning-bolt"></ha-icon>
+                    <span>${formatNumber(tracker.currentPercent, 0, 0)} %</span>
+                  </div>
 
-                  <div>
-
+                  <div class="mppt-daily-data">
                     <div class="mppt-daily-value">
-                      ${formatEnergy(tracker.energyToday)}
-                      kWh
+                      ${formatEnergy(tracker.energyToday)} kWh
                     </div>
-
                     <div class="small-label">
-                      ${t.todayUpper} · ${t.maxUpper} ${formatNumber(
-                        tracker.maxKw,
-                        2,
-                        2
-                      )} kW
+                      ${t.maxUpper} ${formatNumber(tracker.maxKw, 2, 2)} kW
                     </div>
-
                   </div>
 
                 </div>
@@ -1449,6 +1445,29 @@ cards:
           - width: 100%
           - overflow: visible
     extra_styles: |
+
+      /* v0.8.5-alpha MPPT footer: current percentage + daily energy */
+      .mppt-daily-box {
+        justify-content: space-between !important;
+      }
+
+      .mppt-percent {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        color: var(--tracker-end);
+        font-weight: 800;
+        white-space: nowrap;
+      }
+
+      .mppt-percent ha-icon {
+        color: var(--tracker-end);
+      }
+
+      .mppt-daily-data {
+        text-align: right;
+        min-width: 0;
+      }
       /*
        * ==========================================================
        * v0.8.4-alpha MODULE SIZE / MODULGRÖSSE
