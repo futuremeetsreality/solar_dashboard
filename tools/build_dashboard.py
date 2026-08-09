@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # File: tools/build_dashboard.py
-# Timestamp: 2026-08-08 08:15 +0200
+# Timestamp: 2026-08-09 12:05 +0200
 
 """Build the generated Home Assistant dashboard.
 
@@ -9,7 +9,8 @@ Build pipeline / Build-Pipeline:
 2. Apply the existing compatibility/theme/i18n/display migrations.
 3. Replace migrated sections with modular sources from src/.
 4. Apply configurable module visibility/order/size and prepared tracker slots.
-5. Write the single user-facing dashboard.yaml.
+5. Apply MPPT presentation polish.
+6. Write the single user-facing dashboard.yaml.
 """
 
 from __future__ import annotations
@@ -69,7 +70,7 @@ def indent_source(text: str, spaces: int) -> str:
 
 def apply_modular_sources() -> None:
     text = DASHBOARD.read_text(encoding="utf-8")
-    text = re.sub(r"# solar_dashboard .*? - dashboard\.yaml", "# solar_dashboard v0.8.2-alpha - dashboard.yaml", text, count=1)
+    text = re.sub(r"# solar_dashboard .*? - dashboard\.yaml", "# solar_dashboard v0.8.5-alpha - dashboard.yaml", text, count=1)
 
     notice = (
         "# GENERATED FILE - edit src/ and tools/build_dashboard.py instead.\n"
@@ -162,13 +163,72 @@ def apply_module_patch() -> None:
     runpy.run_path(str(MODULE_PATCH), run_name="__main__")
 
 
+def apply_mppt_polish() -> None:
+    text = DASHBOARD.read_text(encoding="utf-8")
+    text = re.sub(r"# solar_dashboard .*? - dashboard\.yaml", "# solar_dashboard v0.8.5-alpha - dashboard.yaml", text, count=1)
+
+    old_return = """                energyToday,
+                colorStart,
+                colorEnd,
+                gauge"""
+    new_return = """                energyToday,
+                currentPercent: maxKw > 0
+                  ? Math.min(Math.max((power / maxKw) * 100, 0), 999)
+                  : 0,
+                colorStart,
+                colorEnd,
+                gauge"""
+    if old_return not in text:
+        raise SystemExit("MPPT tracker return block not found")
+    text = text.replace(old_return, new_return, 1)
+
+    old_box = """                <div class=\"mppt-daily-box\">\n\n                  <ha-icon\n                    icon=\"mdi:lightning-bolt\"\n                  ></ha-icon>\n\n                  <div>\n\n                    <div class=\"mppt-daily-value\">\n                      ${formatEnergy(tracker.energyToday)}\n                      kWh\n                    </div>\n\n                    <div class=\"small-label\">\n                      ${t.todayUpper} · ${t.maxUpper} ${formatNumber(\n                        tracker.maxKw,\n                        2,\n                        2\n                      )} kW\n                    </div>\n\n                  </div>\n\n                </div>"""
+
+    new_box = """                <div class=\"mppt-daily-box\">\n\n                  <div class=\"mppt-percent\">\n                    <ha-icon icon=\"mdi:lightning-bolt\"></ha-icon>\n                    <span>${formatNumber(tracker.currentPercent, 0, 0)} %</span>\n                  </div>\n\n                  <div class=\"mppt-daily-data\">\n                    <div class=\"mppt-daily-value\">\n                      ${formatEnergy(tracker.energyToday)} kWh\n                    </div>\n                    <div class=\"small-label\">\n                      ${t.maxUpper} ${formatNumber(tracker.maxKw, 2, 2)} kW\n                    </div>\n                  </div>\n\n                </div>"""
+
+    if old_box not in text:
+        raise SystemExit("MPPT daily box not found")
+    text = text.replace(old_box, new_box, 1)
+
+    css = """
+      /* v0.8.5-alpha MPPT footer: current percentage + daily energy */
+      .mppt-daily-box {
+        justify-content: space-between !important;
+      }
+
+      .mppt-percent {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        color: var(--tracker-end);
+        font-weight: 800;
+        white-space: nowrap;
+      }
+
+      .mppt-percent ha-icon {
+        color: var(--tracker-end);
+      }
+
+      .mppt-daily-data {
+        text-align: right;
+        min-width: 0;
+      }
+"""
+    marker = "    extra_styles: |\n"
+    if marker not in text:
+        raise SystemExit("extra_styles block not found for MPPT CSS")
+    text = text.replace(marker, marker + css, 1)
+
+    DASHBOARD.write_text(text, encoding="utf-8")
+
+
 def sanity_check() -> None:
     text = DASHBOARD.read_text(encoding="utf-8")
     required = [
         "type: vertical-stack",
         "custom:power-flux-card",
         "custom:button-card",
-        "v0.8.4-alpha",
+        "v0.8.5-alpha",
         "language: 'auto'",
         "displayMode: 'auto'",
         "performanceMode: 'auto'",
@@ -181,6 +241,8 @@ def sanity_check() -> None:
         "MPPT 4",
         "function formatRuntimeSensor(",
         "const I18N = {",
+        "currentPercent:",
+        "class=\"mppt-percent\"",
     ]
     missing = [item for item in required if item not in text]
     if missing:
@@ -192,5 +254,6 @@ if __name__ == "__main__":
     run_legacy_patches()
     apply_modular_sources()
     apply_module_patch()
+    apply_mppt_polish()
     sanity_check()
-    print("Built dashboard.yaml v0.8.4-alpha from modular sources")
+    print("Built dashboard.yaml v0.8.5-alpha from modular sources")
