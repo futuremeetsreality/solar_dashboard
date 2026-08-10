@@ -209,7 +209,7 @@ cards:
                 { id: 'pvTotal', size: 'large' },
                 { id: 'battery', size: 'large' },
                 { id: 'live',    size: 'max' },
-                { id: 'payment', size: 'large' },
+                { id: 'benefit', size: 'large' },
                 { id: 'runtime', size: 'large' }
               ],
 
