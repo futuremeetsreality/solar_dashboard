@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # File: tools/build_dashboard.py
-# Timestamp: 2026-08-09 12:05 +0200
+# Timestamp: 2026-08-10 18:10 +0200
 
 """Build the generated Home Assistant dashboard.
 
@@ -10,7 +10,8 @@ Build pipeline / Build-Pipeline:
 3. Replace migrated sections with modular sources from src/.
 4. Apply configurable module visibility/order/size and prepared tracker slots.
 5. Apply MPPT presentation polish.
-6. Write the single user-facing dashboard.yaml.
+6. Apply responsive PV benefit module.
+7. Write the single user-facing dashboard.yaml.
 """
 
 from __future__ import annotations
@@ -34,6 +35,7 @@ LEGACY_PATCHES = [
 ]
 
 MODULE_PATCH = ROOT / "tools" / "apply_modules_v0_8_3.py"
+BENEFIT_PATCH = ROOT / "tools" / "apply_benefit_v0_8_6.py"
 
 
 def decode_base() -> None:
@@ -70,7 +72,7 @@ def indent_source(text: str, spaces: int) -> str:
 
 def apply_modular_sources() -> None:
     text = DASHBOARD.read_text(encoding="utf-8")
-    text = re.sub(r"# solar_dashboard .*? - dashboard\.yaml", "# solar_dashboard v0.8.5-alpha - dashboard.yaml", text, count=1)
+    text = re.sub(r"# solar_dashboard .*? - dashboard\.yaml", "# solar_dashboard v0.8.6-alpha - dashboard.yaml", text, count=1)
 
     notice = (
         "# GENERATED FILE - edit src/ and tools/build_dashboard.py instead.\n"
@@ -165,7 +167,7 @@ def apply_module_patch() -> None:
 
 def apply_mppt_polish() -> None:
     text = DASHBOARD.read_text(encoding="utf-8")
-    text = re.sub(r"# solar_dashboard .*? - dashboard\.yaml", "# solar_dashboard v0.8.5-alpha - dashboard.yaml", text, count=1)
+    text = re.sub(r"# solar_dashboard .*? - dashboard\.yaml", "# solar_dashboard v0.8.6-alpha - dashboard.yaml", text, count=1)
 
     old_return = """                energyToday,
                 colorStart,
@@ -222,13 +224,19 @@ def apply_mppt_polish() -> None:
     DASHBOARD.write_text(text, encoding="utf-8")
 
 
+def apply_benefit_patch() -> None:
+    if not BENEFIT_PATCH.exists():
+        raise SystemExit(f"Missing benefit patch: {BENEFIT_PATCH}")
+    runpy.run_path(str(BENEFIT_PATCH), run_name="__main__")
+
+
 def sanity_check() -> None:
     text = DASHBOARD.read_text(encoding="utf-8")
     required = [
         "type: vertical-stack",
         "custom:power-flux-card",
         "custom:button-card",
-        "v0.8.5-alpha",
+        "v0.8.6-alpha",
         "language: 'auto'",
         "displayMode: 'auto'",
         "performanceMode: 'auto'",
@@ -243,6 +251,11 @@ def sanity_check() -> None:
         "const I18N = {",
         "currentPercent:",
         "class=\"mppt-percent\"",
+        "benefitEntities:",
+        "class=\"panel benefit-panel",
+        "module-benefit",
+        "pvBenefitToday",
+        "totalBenefitToday",
     ]
     missing = [item for item in required if item not in text]
     if missing:
@@ -255,5 +268,6 @@ if __name__ == "__main__":
     apply_modular_sources()
     apply_module_patch()
     apply_mppt_polish()
+    apply_benefit_patch()
     sanity_check()
-    print("Built dashboard.yaml v0.8.5-alpha from modular sources")
+    print("Built dashboard.yaml v0.8.6-alpha from modular sources")
