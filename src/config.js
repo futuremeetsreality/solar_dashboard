@@ -159,6 +159,12 @@ const SOURCE_CONFIG = {
     // Optionaler Gesamtnutzen in EUR. Wenn nicht verfügbar, werden die beiden Werte oben addiert.
     totalBenefitToday: 'sensor.solar_yield_calculator_day_total_benefit',
 
+    // Optional self-supplied energy today in Wh or kWh. If unavailable, the dashboard
+    // falls back to PV production minus grid export for the visual detail line.
+    // Optionale heute selbst genutzte Energie in Wh oder kWh. Falls nicht verfügbar,
+    // wird für die Detailanzeige PV-Erzeugung minus Netzeinspeisung verwendet.
+    selfSupplyEnergyToday: 'sensor.solar_yield_calculator_day_self_supply_energy',
+
     // Current effective feed-in revenue rate, preferably ct/kWh.
     // Aktueller effektiver Einspeiseerlös, vorzugsweise ct/kWh.
     exportRevenueRate: 'sensor.solar_yield_calculator_export_revenue_rate',
