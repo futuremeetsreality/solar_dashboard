@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # File: tools/build_dashboard.py
-# Timestamp: 2026-08-10 18:10 +0200
+# Timestamp: 2026-08-10 18:30 +0200
 
 """Build the generated Home Assistant dashboard.
 
@@ -11,7 +11,8 @@ Build pipeline / Build-Pipeline:
 4. Apply configurable module visibility/order/size and prepared tracker slots.
 5. Apply MPPT presentation polish.
 6. Apply responsive PV benefit module.
-7. Write the single user-facing dashboard.yaml.
+7. Apply PV benefit visual polish.
+8. Write the single user-facing dashboard.yaml.
 """
 
 from __future__ import annotations
@@ -36,6 +37,7 @@ LEGACY_PATCHES = [
 
 MODULE_PATCH = ROOT / "tools" / "apply_modules_v0_8_3.py"
 BENEFIT_PATCH = ROOT / "tools" / "apply_benefit_v0_8_6.py"
+BENEFIT_POLISH_PATCH = ROOT / "tools" / "apply_benefit_polish_v0_8_6.py"
 
 
 def decode_base() -> None:
@@ -230,6 +232,12 @@ def apply_benefit_patch() -> None:
     runpy.run_path(str(BENEFIT_PATCH), run_name="__main__")
 
 
+def apply_benefit_polish_patch() -> None:
+    if not BENEFIT_POLISH_PATCH.exists():
+        raise SystemExit(f"Missing benefit polish patch: {BENEFIT_POLISH_PATCH}")
+    runpy.run_path(str(BENEFIT_POLISH_PATCH), run_name="__main__")
+
+
 def sanity_check() -> None:
     text = DASHBOARD.read_text(encoding="utf-8")
     required = [
@@ -256,6 +264,7 @@ def sanity_check() -> None:
         "module-benefit",
         "pvBenefitToday",
         "totalBenefitToday",
+        "v0.8.6-alpha BENEFIT POLISH",
     ]
     missing = [item for item in required if item not in text]
     if missing:
@@ -269,5 +278,6 @@ if __name__ == "__main__":
     apply_module_patch()
     apply_mppt_polish()
     apply_benefit_patch()
+    apply_benefit_polish_patch()
     sanity_check()
     print("Built dashboard.yaml v0.8.6-alpha from modular sources")
