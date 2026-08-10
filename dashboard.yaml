@@ -1,4 +1,4 @@
-# solar_dashboard v0.8.5-alpha - dashboard.yaml
+# solar_dashboard v0.8.6-alpha - dashboard.yaml
 # GENERATED FILE - edit src/ and tools/build_dashboard.py instead.
 # GENERIERTE DATEI - Änderungen bitte in src/ und tools/build_dashboard.py vornehmen.
 # Aktualisiert: 2026-08-07 21:25
@@ -360,6 +360,39 @@ cards:
               batteryRuntime:
                 'sensor.ugendorf_battery_restlaufzeit'
             },
+
+            /*
+             * PV BENEFIT / PV-NUTZEN
+             * Default entity names target Solar Yield Calculator.
+             * Standard-Entity-Namen verwenden Solar Yield Calculator.
+             */
+            benefitEntities: {
+                // Today's feed-in revenue in EUR.
+                // Heutiger Einspeiseerlös in EUR.
+                exportRevenueToday: 'sensor.solar_yield_calculator_day_export_revenue',
+            
+                // Today's avoided electricity cost from self-consumption in EUR.
+                // Heutige Ersparnis durch Eigenverbrauch in EUR.
+                selfConsumptionSavingToday: 'sensor.solar_yield_calculator_day_self_consumption_saving',
+            
+                // Optional total benefit in EUR. If unavailable, the dashboard adds the two values above.
+                // Optionaler Gesamtnutzen in EUR. Wenn nicht verfügbar, werden die beiden Werte oben addiert.
+                totalBenefitToday: 'sensor.solar_yield_calculator_day_total_benefit',
+            
+                // Optional self-supplied energy today in Wh or kWh. If unavailable, the dashboard
+                // falls back to PV production minus grid export for the visual detail line.
+                // Optionale heute selbst genutzte Energie in Wh oder kWh. Falls nicht verfügbar,
+                // wird für die Detailanzeige PV-Erzeugung minus Netzeinspeisung verwendet.
+                selfSupplyEnergyToday: 'sensor.solar_yield_calculator_day_self_supply_energy',
+            
+                // Current effective feed-in revenue rate, preferably ct/kWh.
+                // Aktueller effektiver Einspeiseerlös, vorzugsweise ct/kWh.
+                exportRevenueRate: 'sensor.solar_yield_calculator_export_revenue_rate',
+            
+                // Current self-consumption saving rate, preferably ct/kWh.
+                // Aktuelle Eigenverbrauchsersparnis, vorzugsweise ct/kWh.
+                selfConsumptionSavingRate: 'sensor.solar_yield_calculator_self_consumption_saving_rate'
+              },
 
             limits: {
               // Batteriekapazität in kWh.
@@ -853,9 +886,84 @@ cards:
            * ========================================================
            */
 
-          const compensation = getNumber(
-            CONFIG.entities.compensationToday
+          function benefitNumber(entityId) {
+            if (!entityId) return 0;
+            return getNumber(entityId);
+          }
+
+          function benefitRate(entityId) {
+            const sensor = getSensor(entityId);
+            if (!sensor) return { value: 0, text: '–' };
+
+            const raw = Number.parseFloat(sensor.state);
+            if (!Number.isFinite(raw)) return { value: 0, text: '–' };
+
+            const unit = String(sensor.attributes?.unit_of_measurement || '').trim();
+            const normalizedUnit = unit.toLowerCase();
+
+            if (
+              normalizedUnit.includes('eur/kwh') ||
+              normalizedUnit.includes('€/kwh')
+            ) {
+              const ct = raw * 100;
+              return {
+                value: ct,
+                text: `${formatNumber(ct, 2, 2)} ct/kWh`
+              };
+            }
+
+            if (normalizedUnit.includes('ct/kwh')) {
+              return {
+                value: raw,
+                text: `${formatNumber(raw, 2, 2)} ct/kWh`
+              };
+            }
+
+            return {
+              value: raw,
+              text: `${formatNumber(raw, 2, 2)}${unit ? ` ${unit}` : ''}`
+            };
+          }
+
+          const exportRevenueToday = benefitNumber(
+            CONFIG.benefitEntities?.exportRevenueToday
           );
+
+          const selfConsumptionSavingToday = benefitNumber(
+            CONFIG.benefitEntities?.selfConsumptionSavingToday
+          );
+
+          const configuredTotalBenefit = benefitNumber(
+            CONFIG.benefitEntities?.totalBenefitToday
+          );
+
+          const totalBenefitToday = configuredTotalBenefit > 0
+            ? configuredTotalBenefit
+            : exportRevenueToday + selfConsumptionSavingToday;
+
+          const exportRevenueRate = benefitRate(
+            CONFIG.benefitEntities?.exportRevenueRate
+          );
+
+          const selfConsumptionSavingRate = benefitRate(
+            CONFIG.benefitEntities?.selfConsumptionSavingRate
+          );
+
+          const configuredSelfSupplyToday = CONFIG.benefitEntities?.selfSupplyEnergyToday
+            ? getEnergy(CONFIG.benefitEntities.selfSupplyEnergyToday)
+            : 0;
+
+          const selfSupplyToday = configuredSelfSupplyToday > 0
+            ? configuredSelfSupplyToday
+            : Math.max(solarToday - exportToday, 0);
+
+          const exportBenefitShare = totalBenefitToday > 0
+            ? Math.min(Math.max((exportRevenueToday / totalBenefitToday) * 100, 0), 100)
+            : 0;
+
+          const savingBenefitShare = totalBenefitToday > 0
+            ? Math.min(Math.max((selfConsumptionSavingToday / totalBenefitToday) * 100, 0), 100)
+            : 0;
 
           const runtimeSensor = getSensor(
             CONFIG.entities.batteryRuntime
@@ -1072,7 +1180,7 @@ cards:
            */
 
           const availableModules = [
-            'mppt', 'pvTotal', 'battery', 'live', 'payment', 'runtime'
+            'mppt', 'pvTotal', 'battery', 'live', 'benefit', 'runtime'
           ];
           const validModuleSizes = ['small', 'large', 'max'];
 
@@ -1377,33 +1485,45 @@ cards:
               </div>
 
               <!-- =============================================== -->
-              <!-- VERGÜTUNG -->
+              <!-- PV BENEFIT / PV-NUTZEN -->
               <!-- =============================================== -->
 
-              <div class="panel information-panel payment-panel module-item module-payment${moduleClass('payment')}" style="--module-order:${moduleOrder('payment')};">
+              <div class="panel benefit-panel module-item module-benefit${moduleClass('benefit')}" style="--module-order:${moduleOrder('benefit')};">
 
-                <ha-icon
-                  icon="mdi:transmission-tower-export"
-                ></ha-icon>
+                <div class="benefit-title">${t.pvBenefitToday}</div>
 
-                <div class="information-content">
-
-                  <div class="information-title">
-                    ${t.compensationToday}
+                <div class="benefit-main-grid">
+                  <div class="benefit-part benefit-export">
+                    <ha-icon icon="mdi:transmission-tower-export"></ha-icon>
+                    <div class="benefit-part-label">${t.feedInRevenue}</div>
+                    <div class="benefit-part-value">${formatNumber(exportRevenueToday, 2, 2)} €</div>
+                    <div class="benefit-energy">${formatEnergy(exportToday)} kWh</div>
+                    <div class="benefit-rate">${exportRevenueRate.text}</div>
                   </div>
 
-                  <div class="information-value">
-                    ${formatNumber(
-                      compensation,
-                      2,
-                      2
-                    )} €
+                  <div class="benefit-part benefit-saving">
+                    <ha-icon icon="mdi:home-lightning-bolt"></ha-icon>
+                    <div class="benefit-part-label">${t.saving}</div>
+                    <div class="benefit-part-value">${formatNumber(selfConsumptionSavingToday, 2, 2)} €</div>
+                    <div class="benefit-energy">${formatEnergy(selfSupplyToday)} kWh</div>
+                    <div class="benefit-rate">${selfConsumptionSavingRate.text}</div>
                   </div>
+                </div>
 
-                  <div class="information-subtitle">
-                    ${t.feedInRevenue}
+                <div class="benefit-total">
+                  <span class="benefit-total-value">${formatNumber(totalBenefitToday, 2, 2)} €</span>
+                  <span class="benefit-total-label">${t.totalBenefit}</span>
+                </div>
+
+                <div class="benefit-share-wrap">
+                  <div class="benefit-share-bar">
+                    <div class="benefit-share-export" style="width:${exportBenefitShare}%;"></div>
+                    <div class="benefit-share-saving" style="width:${savingBenefitShare}%;"></div>
                   </div>
-
+                  <div class="benefit-share-labels">
+                    <span>${t.export} ${formatNumber(exportBenefitShare, 0, 0)} %</span>
+                    <span>${t.saving} ${formatNumber(savingBenefitShare, 0, 0)} %</span>
+                  </div>
                 </div>
 
               </div>
@@ -1455,6 +1575,206 @@ cards:
           - width: 100%
           - overflow: visible
     extra_styles: |
+
+      /* ==========================================================
+       * v0.8.6-alpha PV BENEFIT / PV-NUTZEN
+       * small = compact, large = split detail, max = full economics
+       * ========================================================== */
+      .benefit-panel {
+        min-width: 0;
+        padding: 14px 16px;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        background:
+          radial-gradient(circle at 12% 110%, rgba(38,198,218,0.10), transparent 45%),
+          radial-gradient(circle at 88% 110%, rgba(255,193,7,0.10), transparent 45%),
+          var(--solar-surface-strong) !important;
+      }
+
+      .benefit-title {
+        text-align: center;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        color: var(--primary-text-color);
+      }
+
+      .benefit-main-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .benefit-part {
+        min-width: 0;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        grid-template-areas:
+          "icon label"
+          "icon value"
+          "icon energy"
+          "icon rate";
+        column-gap: 7px;
+        align-items: center;
+      }
+
+      .benefit-part ha-icon {
+        grid-area: icon;
+        width: 26px;
+        height: 26px;
+      }
+
+      .benefit-export,
+      .benefit-export ha-icon { color: #26c6da; }
+      .benefit-saving,
+      .benefit-saving ha-icon { color: #ffd740; }
+
+      .benefit-part-label {
+        grid-area: label;
+        font-size: 9px;
+        font-weight: 800;
+        opacity: 0.82;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .benefit-part-value {
+        grid-area: value;
+        font-size: 21px;
+        line-height: 1.05;
+        font-weight: 900;
+      }
+
+      .benefit-energy,
+      .benefit-rate {
+        font-size: 9px;
+        color: var(--secondary-text-color);
+      }
+      .benefit-energy { grid-area: energy; }
+      .benefit-rate { grid-area: rate; }
+
+      .benefit-total {
+        display: flex;
+        justify-content: center;
+        align-items: baseline;
+        gap: 7px;
+        color: var(--primary-text-color);
+      }
+
+      .benefit-total-value {
+        font-size: 25px;
+        font-weight: 900;
+      }
+
+      .benefit-total-label {
+        font-size: 9px;
+        font-weight: 800;
+        color: var(--secondary-text-color);
+      }
+
+      .benefit-share-wrap { display: none; }
+
+      .module-benefit.module-size-small {
+        align-content: center;
+      }
+      .module-benefit.module-size-small .benefit-title {
+        font-size: 10px;
+      }
+      .module-benefit.module-size-small .benefit-total {
+        order: 1;
+      }
+      .module-benefit.module-size-small .benefit-main-grid {
+        order: 2;
+        gap: 4px;
+      }
+      .module-benefit.module-size-small .benefit-part {
+        display: block;
+        text-align: center;
+      }
+      .module-benefit.module-size-small .benefit-part ha-icon,
+      .module-benefit.module-size-small .benefit-energy,
+      .module-benefit.module-size-small .benefit-rate {
+        display: none;
+      }
+      .module-benefit.module-size-small .benefit-part-label {
+        font-size: 8px;
+      }
+      .module-benefit.module-size-small .benefit-part-value {
+        font-size: 14px;
+      }
+      .module-benefit.module-size-small .benefit-total-value {
+        font-size: 24px;
+      }
+
+      .module-benefit.module-size-large .benefit-rate,
+      .module-benefit.module-size-large .benefit-share-wrap {
+        display: none;
+      }
+
+      .module-benefit.module-size-max {
+        grid-template-columns: 1fr auto;
+        grid-template-areas:
+          "title title"
+          "parts total"
+          "share share";
+        column-gap: 20px;
+        padding: 15px 20px;
+      }
+      .module-benefit.module-size-max .benefit-title { grid-area: title; }
+      .module-benefit.module-size-max .benefit-main-grid { grid-area: parts; gap: 24px; }
+      .module-benefit.module-size-max .benefit-total {
+        grid-area: total;
+        min-width: 150px;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0;
+      }
+      .module-benefit.module-size-max .benefit-total-value { font-size: 32px; }
+      .module-benefit.module-size-max .benefit-share-wrap {
+        grid-area: share;
+        display: block;
+      }
+      .benefit-share-bar {
+        display: flex;
+        width: 100%;
+        height: 8px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: var(--solar-track);
+      }
+      .benefit-share-export {
+        background: linear-gradient(90deg, #00acc1, #26c6da);
+      }
+      .benefit-share-saving {
+        background: linear-gradient(90deg, #ffb300, #ffd740);
+      }
+      .benefit-share-labels {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 4px;
+        font-size: 8px;
+        color: var(--secondary-text-color);
+      }
+
+      @media screen and (max-width: 699px) {
+        .benefit-panel {
+          padding: 11px 12px;
+        }
+        .benefit-part-value { font-size: 18px; }
+        .benefit-total-value { font-size: 22px; }
+        .module-benefit.module-size-max {
+          grid-template-columns: 1fr;
+          grid-template-areas:
+            "title"
+            "parts"
+            "total"
+            "share";
+          gap: 7px;
+        }
+      }
 
       /* v0.8.5-alpha MPPT footer: current percentage + daily energy */
       .mppt-daily-box {
