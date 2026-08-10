@@ -1,5 +1,35 @@
 # Changelog
 
+## v0.8.6-alpha - 2026-08-10
+
+- Replaced the legacy feed-in-only `payment` tile with the new configurable `benefit` module.
+- Added daily PV financial benefit split into feed-in revenue and self-consumption savings.
+- Added total daily PV benefit with automatic fallback to `export revenue + self-consumption savings` when no dedicated total sensor is available.
+- Added default mappings for Solar Yield Calculator day export revenue, day self-consumption saving, day total benefit, self-supply energy and current revenue/saving rates.
+- Added unit-aware rate display with automatic EUR/kWh to ct/kWh conversion.
+- Added three adaptive benefit layouts driven by the existing module size system:
+  - `small`: compact total plus feed-in and savings values.
+  - `large`: split revenue/savings values plus daily energy details.
+  - `max`: full economics view including current rates and a financial contribution split bar.
+- Added German and English translations for PV benefit, savings and total benefit labels.
+- Power Flux remains outside the configurable module ordering.
+
+## v0.8.5-alpha - 2026-08-10
+
+- Improved MPPT footer presentation.
+- Removed the redundant `Today/Heute` label from MPPT daily-energy rows.
+- Added current tracker output percentage based on current power divided by configured tracker maximum.
+- Reworked MPPT footer alignment for portrait and landscape layouts.
+- Kept lightning icon and percentage visually centered on the left half while daily energy and maximum remain on the right.
+
+## v0.8.4-alpha - 2026-08-09
+
+- Extended `CONFIG.modules` from simple IDs to objects with `id` and `size`.
+- Added module sizes `small`, `large` and `max`.
+- `small` uses one quarter of a four-column desktop grid, `large` uses half a row, and `max` uses the full row.
+- Added responsive minimum-width behavior for narrow mobile screens.
+- Default layout keeps PV Total and Battery side by side and Revenue/Runtime side by side.
+
 ## v0.8.3-alpha - 2026-08-08
 
 - Added configurable dashboard module visibility and ordering through `CONFIG.modules`.
