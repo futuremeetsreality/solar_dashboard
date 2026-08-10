@@ -59,9 +59,15 @@ const SOURCE_CONFIG = {
    *   Kompakte Live-Übersicht für PV, Haus, Netz und Batterie inklusive
    *   Tagesenergiewerten.
    *
-   * 'payment'
-   *   Today's feed-in revenue/compensation.
-   *   Heutiger Einspeiseerlös bzw. Vergütung.
+   * 'benefit'
+   *   Today's financial PV benefit split into feed-in revenue and savings from
+   *   self-consumption. The amount of detail automatically follows module size:
+   *   small = compact totals, large = split values + daily energy,
+   *   max = full economic overview including rates and benefit split bar.
+   *   Heutiger finanzieller PV-Nutzen, aufgeteilt in Einspeiseerlös und
+   *   Eigenverbrauchsersparnis. Der Detailgrad folgt automatisch der Größe:
+   *   small = kompakte Summen, large = Splitwerte + Tagesenergie,
+   *   max = vollständige Wirtschaftsansicht inkl. Tarifen und Anteilbalken.
    *
    * 'runtime'
    *   Estimated remaining battery runtime.
@@ -75,7 +81,7 @@ const SOURCE_CONFIG = {
     { id: 'pvTotal', size: 'large' },
     { id: 'battery', size: 'large' },
     { id: 'live',    size: 'max' },
-    { id: 'payment', size: 'large' },
+    { id: 'benefit', size: 'large' },
     { id: 'runtime', size: 'large' }
   ],
 
@@ -129,5 +135,36 @@ const SOURCE_CONFIG = {
       colorStart: '#ab47bc',
       colorEnd: '#e040fb'
     }
-  ]
+  ],
+
+  /*
+   * FINANCIAL / PV BENEFIT ENTITIES
+   * FINANZ / PV-NUTZEN ENTITÄTEN
+   *
+   * These defaults target Solar Yield Calculator entity names. Replace them
+   * with equivalent sensors from any other integration if required.
+   * Diese Vorgaben verwenden die Entity-Namen des Solar Yield Calculators.
+   * Bei anderen Integrationen einfach durch gleichwertige Sensoren ersetzen.
+   */
+  benefitEntities: {
+    // Today's feed-in revenue in EUR.
+    // Heutiger Einspeiseerlös in EUR.
+    exportRevenueToday: 'sensor.solar_yield_calculator_day_export_revenue',
+
+    // Today's avoided electricity cost from self-consumption in EUR.
+    // Heutige Ersparnis durch Eigenverbrauch in EUR.
+    selfConsumptionSavingToday: 'sensor.solar_yield_calculator_day_self_consumption_saving',
+
+    // Optional total benefit in EUR. If unavailable, the dashboard adds the two values above.
+    // Optionaler Gesamtnutzen in EUR. Wenn nicht verfügbar, werden die beiden Werte oben addiert.
+    totalBenefitToday: 'sensor.solar_yield_calculator_day_total_benefit',
+
+    // Current effective feed-in revenue rate, preferably ct/kWh.
+    // Aktueller effektiver Einspeiseerlös, vorzugsweise ct/kWh.
+    exportRevenueRate: 'sensor.solar_yield_calculator_export_revenue_rate',
+
+    // Current self-consumption saving rate, preferably ct/kWh.
+    // Aktuelle Eigenverbrauchsersparnis, vorzugsweise ct/kWh.
+    selfConsumptionSavingRate: 'sensor.solar_yield_calculator_self_consumption_saving_rate'
+  }
 };
